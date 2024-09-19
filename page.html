@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centered Form with Conditional Alignment</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            width: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 80%;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .top-area {
+            flex: 1;
+            border: 1px solid #ccc;
+            padding: 10px;
+            overflow: auto;
+            background-color: #e9ecef;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start; /* Default alignment */
+        }
+        .text-box {
+            width: 75%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+            word-wrap: break-word;
+            box-sizing: border-box;
+            font-size: small;
+            justify-content:space-between
+        }
+        .align-left {
+            text-align: left;
+        }
+        .align-right {
+            align-self: flex-end;
+        }
+        .bottom-area {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+
+    <style>
+        .loader {
+        border: 5px solid #f3f3f3;
+        border-radius: 50%;
+        border-top: 5px solid #3498db;
+        width: 10px;
+        height: 10px;
+        -webkit-animation: spin 1s linear infinite; /* Safari */
+        animation: spin 1s linear infinite;
+        }
+        
+        /* Safari */
+        @-webkit-keyframes spin {
+        0% { -webkit-transform: rotate(0deg); }
+        100% { -webkit-transform: rotate(360deg); }
+        }
+        
+        @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="top-area" id="displayArea">
+            <!-- New divs with text will be added here -->
+        </div>
+        <div class="bottom-area">
+            <input type="text" id="textInput" placeholder="Enter text here">
+            <button onclick="submitText()">Submit</button>
+        </div>
+    </div>
+
+    <script>
+        function submitText() {
+            var input = document.getElementById('textInput').value;
+            document.getElementById('textInput').value = '';
+            var divPergunta = document.createElement('div');
+            divPergunta.className = 'text-box';
+            divPergunta.textContent = input;
+            divPergunta.classList.add('align-left');
+            document.getElementById('displayArea').appendChild(divPergunta);
+
+            
+            var divResposta = document.createElement('div');
+            divResposta.className = 'text-box';
+            divResposta.innerHTML = "<i>Buscando Resposta<i> <div class='loader'></div>";
+            divResposta.classList.add('align-right');
+            document.getElementById('displayArea').appendChild(divResposta);
+
+            fetch("http://127.0.0.1:8000/get_embedding", {
+                method: "POST",
+                body: JSON.stringify({
+                    pergunta: input
+                }),
+                headers: {
+                    "Content-type": "application/json; charset=UTF-8"
+                }
+                })
+                .then((response) => response.json())
+                .then((json) => {
+                    divResposta.innerHTML = json.resposta.saida + "<hr><p>Fontes:</p><div style='font-size: smaller;font-style: italic;'>" + json.resposta.documentos.map((documento) => documento.page_content).join('\n\n') + "</div>";
+                });
+            }
+    </script>
+</body>
+</html>
+
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+</head>
+<body>

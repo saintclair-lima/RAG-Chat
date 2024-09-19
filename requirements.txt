@@ -1,0 +1,140 @@
+annotated-types==0.7.0
+anyio==4.5.0
+archspec @ file:///home/conda/feedstock_root/build_artifacts/archspec_1708969572489/work
+asgiref==3.8.1
+backoff==2.2.1
+bcrypt==4.2.0
+boltons @ file:///home/conda/feedstock_root/build_artifacts/boltons_1711936407380/work
+Brotli @ file:///D:/bld/brotli-split_1725267609074/work
+build==1.2.2
+cachetools==5.5.0
+certifi @ file:///home/conda/feedstock_root/build_artifacts/certifi_1725278078093/work/certifi
+cffi @ file:///D:/bld/cffi_1724956411237/work
+charset-normalizer @ file:///home/conda/feedstock_root/build_artifacts/charset-normalizer_1698833585322/work
+chroma-hnswlib==0.7.6
+chromadb==0.5.7
+click==8.1.7
+colorama @ file:///home/conda/feedstock_root/build_artifacts/colorama_1666700638685/work
+coloredlogs==15.0.1
+conda @ file:///D:/bld/conda_1722273339559/work
+conda-libmamba-solver @ file:///home/conda/feedstock_root/build_artifacts/conda-libmamba-solver_1721292473987/work/src
+conda-package-handling @ file:///home/conda/feedstock_root/build_artifacts/conda-package-handling_1717678605937/work
+conda_package_streaming @ file:///home/conda/feedstock_root/build_artifacts/conda-package-streaming_1717678526951/work
+Deprecated==1.2.14
+distro @ file:///home/conda/feedstock_root/build_artifacts/distro_1704321475663/work
+dnspython==2.6.1
+email_validator==2.2.0
+fastapi==0.115.0
+fastapi-cli==0.0.5
+filelock==3.16.1
+flatbuffers==24.3.25
+frozendict @ file:///D:/bld/frozendict_1715092911855/work
+fsspec==2024.9.0
+google-auth==2.34.0
+googleapis-common-protos==1.65.0
+grpcio==1.66.1
+h11==0.14.0
+h2 @ file:///home/conda/feedstock_root/build_artifacts/h2_1634280454336/work
+hpack==4.0.0
+httpcore==1.0.5
+httptools==0.6.1
+httpx==0.27.2
+huggingface-hub==0.25.0
+humanfriendly==10.0
+hyperframe @ file:///home/conda/feedstock_root/build_artifacts/hyperframe_1619110129307/work
+idna @ file:///home/conda/feedstock_root/build_artifacts/idna_1724450538981/work
+importlib_metadata==8.4.0
+importlib_resources==6.4.5
+Jinja2==3.1.4
+joblib==1.4.2
+jsonpatch @ file:///home/conda/feedstock_root/build_artifacts/jsonpatch_1695536281965/work
+jsonpointer @ file:///D:/bld/jsonpointer_1725303007361/work
+kubernetes==30.1.0
+langchain-chroma==0.1.4
+langchain-core==0.3.1
+langchain-huggingface==0.1.0
+langchain-ollama==0.2.0
+langsmith==0.1.123
+libmambapy @ file:///D:/bld/mamba-split_1725066316332/work/libmambapy
+mamba @ file:///D:/bld/mamba-split_1725066316332/work/mamba
+markdown-it-py==3.0.0
+MarkupSafe==2.1.5
+mdurl==0.1.2
+menuinst @ file:///D:/bld/menuinst_1725359027500/work
+mmh3==5.0.0
+monotonic==1.6
+mpmath==1.3.0
+networkx==3.3
+numpy==1.26.4
+oauthlib==3.2.2
+ollama==0.3.3
+onnxruntime==1.19.2
+opentelemetry-api==1.27.0
+opentelemetry-exporter-otlp-proto-common==1.27.0
+opentelemetry-exporter-otlp-proto-grpc==1.27.0
+opentelemetry-instrumentation==0.48b0
+opentelemetry-instrumentation-asgi==0.48b0
+opentelemetry-instrumentation-fastapi==0.48b0
+opentelemetry-proto==1.27.0
+opentelemetry-sdk==1.27.0
+opentelemetry-semantic-conventions==0.48b0
+opentelemetry-util-http==0.48b0
+orjson==3.10.7
+overrides==7.7.0
+packaging @ file:///home/conda/feedstock_root/build_artifacts/packaging_1718189413536/work
+pillow==10.4.0
+platformdirs @ file:///home/conda/feedstock_root/build_artifacts/platformdirs_1715777629804/work
+pluggy @ file:///home/conda/feedstock_root/build_artifacts/pluggy_1713667077545/work
+posthog==3.6.6
+protobuf==4.25.5
+pyasn1==0.6.1
+pyasn1_modules==0.4.1
+pycosat @ file:///D:/bld/pycosat_1696355949390/work
+pycparser @ file:///home/conda/feedstock_root/build_artifacts/pycparser_1711811537435/work
+pydantic==2.9.2
+pydantic_core==2.23.4
+Pygments==2.18.0
+PyPika==0.48.9
+pyproject_hooks==1.1.0
+pyreadline3==3.5.4
+PySocks @ file:///D:/bld/pysocks_1661604991356/work
+python-dateutil==2.9.0.post0
+python-dotenv==1.0.1
+python-multipart==0.0.9
+PyYAML==6.0.2
+regex==2024.9.11
+requests @ file:///home/conda/feedstock_root/build_artifacts/requests_1717057054362/work
+requests-oauthlib==2.0.0
+rich==13.8.1
+rsa==4.9
+ruamel.yaml @ file:///D:/bld/ruamel.yaml_1707298255530/work
+ruamel.yaml.clib @ file:///D:/bld/ruamel.yaml.clib_1707314679563/work
+safetensors==0.4.5
+scikit-learn==1.5.2
+scipy==1.14.1
+sentence-transformers==3.1.0
+setuptools==75.1.0
+shellingham==1.5.4
+six==1.16.0
+sniffio==1.3.1
+starlette==0.38.5
+sympy==1.13.3
+tenacity==8.5.0
+threadpoolctl==3.5.0
+tokenizers==0.19.1
+torch==2.4.1
+tqdm @ file:///home/conda/feedstock_root/build_artifacts/tqdm_1722737464726/work
+transformers==4.44.2
+truststore @ file:///home/conda/feedstock_root/build_artifacts/truststore_1724770958874/work
+typer==0.12.5
+typing_extensions==4.12.2
+urllib3 @ file:///home/conda/feedstock_root/build_artifacts/urllib3_1719391292974/work
+uvicorn==0.30.6
+watchfiles==0.24.0
+websocket-client==1.8.0
+websockets==13.0.1
+wheel==0.44.0
+win-inet-pton @ file:///D:/bld/win_inet_pton_1667051142467/work
+wrapt==1.16.0
+zipp==3.20.2
+zstandard==0.23.0
