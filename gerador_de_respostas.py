@@ -92,7 +92,11 @@ class GeradorDeRespostas:
         passa os resultados para o LLM gerar uma resposta palatável e a retorna'''
 
         pergunta = dadosChat.pergunta
-        historico_chat = [{"role": "user", "content": item} for item in dadosChat.historico]
+        historico_chat = []
+
+        for item in dadosChat.historico:
+            historico_chat.append(("human", item[0]))
+            historico_chat.append(("ai", item[1]))
 
         if verbose: print('Gerador de respostas: realizando consulta...')
         if verbose: print(f'--- Pergunta feita: {pergunta}')
@@ -112,7 +116,8 @@ class GeradorDeRespostas:
         if verbose: print(f'--- resposta gerada em ({tempo_llama} segundos)')
         resposta_formatada = self.formatador_saida.invoke(resposta_llama)
 
-        dadosChat.historico.append(pergunta)
+        dadosChat.historico.append(("human", pergunta))
+        dadosChat.historico.append(("ai", resposta_formatada))
 
         return {
             'pergunta': pergunta,

@@ -144,7 +144,10 @@
                 })
                 .then((response) => response.json())
                 .then((json) => {
-                    divResposta.innerHTML = json.dados_resposta.resposta + "<hr><p>Fontes:</p><div style='font-size: smaller;font-style: italic;'>" + json.dados_resposta.documentos.map((documento) => documento.page_content).join('\n\n') + "</div>";
+                    divResposta.innerHTML = json.dados_resposta.resposta + 
+                                            "<hr><p>Fontes:</p><div style='font-size: smaller;font-style: italic;'>" + 
+                                            json.dados_resposta.documentos.map((documento) => '<p>'+documento.page_content+'</p>').join('\n') +
+                                            "</div>";
                     historico_chat = json.dados_resposta.historico;
                 });
             }
