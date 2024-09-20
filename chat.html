@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Centered Form with Conditional Alignment</title>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Título que fique discreto no histórico de navegação</title>
     <style>
         body {
             margin: 0;
@@ -60,7 +60,7 @@
             align-items: flex-end;
         }
         input[type="text"] {
-            width: 100%;
+            width: 96%;
             padding: 10px;
             margin-bottom: 10px;
             border: 1px solid #ccc;
@@ -105,15 +105,17 @@
 <body>
     <div class="container">
         <div class="top-area" id="displayArea">
-            <!-- New divs with text will be added here -->
+            <!-- Divs das mensagens serão adicionadas aqui -->
         </div>
         <div class="bottom-area">
-            <input type="text" id="textInput" placeholder="Enter text here">
-            <button onclick="submitText()">Submit</button>
+            <input type="text" id="textInput" placeholder="Digite sua pergunta">
+            <button onclick="submitText()">Enviar</button>
         </div>
     </div>
 
     <script>
+        var historico_chat = []
+
         function submitText() {
             var input = document.getElementById('textInput').value;
             document.getElementById('textInput').value = '';
@@ -130,10 +132,11 @@
             divResposta.classList.add('align-right');
             document.getElementById('displayArea').appendChild(divResposta);
 
-            fetch("http://127.0.0.1:8000/get_embedding", {
+            fetch("http://127.0.0.1:8000/hilda/enviar_pergunta/", {
                 method: "POST",
                 body: JSON.stringify({
-                    pergunta: input
+                    pergunta: input,
+                    historico: historico_chat,
                 }),
                 headers: {
                     "Content-type": "application/json; charset=UTF-8"
@@ -141,18 +144,10 @@
                 })
                 .then((response) => response.json())
                 .then((json) => {
-                    divResposta.innerHTML = json.resposta.saida + "<hr><p>Fontes:</p><div style='font-size: smaller;font-style: italic;'>" + json.resposta.documentos.map((documento) => documento.page_content).join('\n\n') + "</div>";
+                    divResposta.innerHTML = json.dados_resposta.resposta + "<hr><p>Fontes:</p><div style='font-size: smaller;font-style: italic;'>" + json.dados_resposta.documentos.map((documento) => documento.page_content).join('\n\n') + "</div>";
+                    historico_chat = json.dados_resposta.historico;
                 });
             }
     </script>
 </body>
 </html>
-
-
-<!DOCTYPE html>
-<html>
-<head>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-</head>
-<body>
