@@ -5,6 +5,8 @@ from starlette.middleware.cors import CORSMiddleware
 from langchain_huggingface import HuggingFaceEmbeddings
 from gerador_de_respostas import GeradorDeRespostas, DadosChat
 
+URL_BANCO_VETORES = 'banco_vetores'
+
 print('Instanciando a api (FastAPI)')
 app = FastAPI()
 app.add_middleware(
@@ -22,7 +24,7 @@ funcao_de_embeddings = HuggingFaceEmbeddings(
     model_kwargs={"device": "cpu"}
 )
 
-gerador_de_respostas = GeradorDeRespostas(funcao_de_embeddings=funcao_de_embeddings, url_vector_store='chroma_db_instructor_xl')
+gerador_de_respostas = GeradorDeRespostas(funcao_de_embeddings=funcao_de_embeddings, url_banco_vetores=URL_BANCO_VETORES)
 
 print('Definindo as rotas')
 

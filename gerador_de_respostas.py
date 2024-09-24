@@ -17,10 +17,13 @@ class GeradorDeRespostas:
     Classe cuja função é realizar consulta em um banco de vetores existente e, por meio de uma API de um LLM
     gera uma texto de resposta que condensa as informações resultantes da consulta.
     '''
-    def __init__(self, url_vector_store,
+    def __init__(self, url_banco_vetores,
                     funcao_de_embeddings=None,
                     device='cpu',
-                    tipo_de_busca='mmr',
+                    # tipo_de_busca='mmr',
+                    # tipo_de_busca='similarity',
+                    tipo_de_busca='similarity_score_threshold',
+                    limiar_score_similaridade=.6,
                     url_llama='http://localhost:11434',
                     papel_do_LLM=None,
                     verbose=True):
@@ -37,12 +40,12 @@ class GeradorDeRespostas:
         if verbose: print('-- Gerador de respostas em inicialização...')
         if verbose: print('--- inicializando banco de vetores...')
         self.banco_de_vetores = Chroma(
-            persist_directory=url_vector_store,
+            persist_directory=url_banco_vetores,
             embedding_function=funcao_de_embeddings
         )
 
         if verbose: print('--- gerando retriever (gerenciador de consultas)...')
-        self.gerenciador_de_consulta = self.banco_de_vetores.as_retriever(search_type=tipo_de_busca)
+        self.gerenciador_de_consulta = self.banco_de_vetores.as_retriever(search_type=tipo_de_busca, search_kwargs={'score_threshold':limiar_score_similaridade, 'k': 10})
 
         if verbose: print('--- gerando a interface com o LLM...')
         self.interface_llama = ChatOllama(
@@ -52,12 +55,13 @@ class GeradorDeRespostas:
         )
 
         if not papel_do_LLM:
-            papel_do_LLM = '''Você é um assistente de servidores que responde a dúvidas sobre a Assembleia legislativa do Rio Grande do Norte.
+            papel_do_LLM = '''Você é um assistente de servidores que responde a dúvidas de servidores da Assembleia Legislativa do Rio Grande do Norte.
+                            Você tem conhecimento apenas sobre 3 assuntos: Constituição Federal do Brasil, Constituição do Estado do Rio Grande do Norte e
+                            Regimento interno da Assembleia Legislativa do Estado do Rio Grande do Norte.
+                            ALERN e ALRN significam Assembleia Legislativa do Estado do Rio Grande do Norte.
                             Use as informações do contexto fornecido para gerar uma resposta clara para a pergunta.
                             Na resposta, não mencione que foi fornecido um texto, agindo como se o contexto fornecido fosse parte do seu conhecimento próprio.
                             Quando adequado, pode citar os nomes dos documentos e números dos artigos em que a resposta se baseia.
-                            O histórico do chat deve ser revisado somente para manter o contexto, mas as perguntas do histórico não devem ser respondidas.
-                            Responda somente à pergutna atual.
                             A resposta não deve ter saudação, nem qualquer tipo de introdução que dê a entender que não houve interação anterior.
                             Assuma um tom formal, porém caloroso, com gentileza nas respostas.
                             Utilize palavras e termos que sejam claros, autoexplicativos e linguagem simples, próximo do que o cidadão comum utiliza.
@@ -85,7 +89,7 @@ class GeradorDeRespostas:
 
     def formatar_documentos_recuperados(self, docs):
             '''Função de formatação dos documentos. 'docs' é uma lista de objetos do tipo langchain_core.documents.Document'''
-            return "\n\n\n\n".join([doc.page_content for doc in docs])
+            return "\n\n\n\n".join([f'{doc.metadata['titulo']}, {doc.page_content}' for doc in docs])
 
     def consultar(self, dadosChat: DadosChat, verbose=True):
         '''Recebe uma pergunta, em formato de string, realiza uma consulta no banco de vetores,
@@ -106,11 +110,11 @@ class GeradorDeRespostas:
         tempo_consulta = marcador_tempo_fim - marcador_tempo_inicio
         if verbose: print(f'--- consulta no banco concluída ({tempo_consulta} segundos)')
         contexto = self.formatar_documentos_recuperados(documentos_retornados)
-        runnable_output = self.template_do_prompt.invoke({"pergunta": pergunta, "contexto": contexto, 'historico_chat': historico_chat})
+        prompt_llama = self.template_do_prompt.invoke({"pergunta": pergunta, "contexto": contexto, 'historico_chat': historico_chat})
         
         if verbose: print(f'--- gerando resposta com o Llama')
         marcador_tempo_inicio = time()
-        resposta_llama = self.interface_llama.invoke(runnable_output)
+        resposta_llama = self.interface_llama.invoke(prompt_llama)
         marcador_tempo_fim = time()
         tempo_llama = marcador_tempo_fim - marcador_tempo_inicio
         if verbose: print(f'--- resposta gerada em ({tempo_llama} segundos)')
@@ -122,7 +126,7 @@ class GeradorDeRespostas:
         return {
             'pergunta': pergunta,
             'documentos': documentos_retornados,
-            'contexto': runnable_output.messages[1].content,
+            'contexto': prompt_llama.messages[1].content,
             'resposta_llama': resposta_llama,
             'resposta': resposta_formatada,
             'historico': dadosChat.historico,

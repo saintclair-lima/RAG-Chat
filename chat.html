@@ -116,6 +116,22 @@
     <script>
         var historico_chat = []
 
+        function formatarResposta(resultadoJson){
+            var textoResposta = 
+                resultadoJson.dados_resposta.resposta.split('\n').map((linha) => {
+                    return `<p>${linha}</p>\n`
+                }).join('\n') + 
+
+                "<hr>\n<p><b>Fontes</b></p>\n<div style='font-size: smaller;font-style: italic;'>\n" + 
+
+                resultadoJson.dados_resposta.documentos.map((documento) => {
+                    return `<p><b>${documento.metadata.titulo}</b><br>${documento.page_content}</p>`
+                }).join('\n') + 
+                
+                `</div>`;
+            return textoResposta;
+        }
+
         function submitText() {
             var input = document.getElementById('textInput').value;
             document.getElementById('textInput').value = '';
@@ -142,13 +158,10 @@
                     "Content-type": "application/json; charset=UTF-8"
                 }
                 })
-                .then((response) => response.json())
-                .then((json) => {
-                    divResposta.innerHTML = json.dados_resposta.resposta + 
-                                            "<hr><p>Fontes:</p><div style='font-size: smaller;font-style: italic;'>" + 
-                                            json.dados_resposta.documentos.map((documento) => '<p>'+documento.page_content+'</p>').join('\n') +
-                                            "</div>";
-                    historico_chat = json.dados_resposta.historico;
+                .then((resultado) => resultado.json())
+                .then((resultadoJson) => {
+                    divResposta.innerHTML = formatarResposta(resultadoJson);
+                    historico_chat = resultadoJson.dados_resposta.historico;
                 });
             }
     </script>
