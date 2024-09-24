@@ -24,6 +24,7 @@ class GeradorDeRespostas:
                     # tipo_de_busca='similarity',
                     tipo_de_busca='similarity_score_threshold',
                     limiar_score_similaridade=.6,
+                    numero_de_documentos_retornados=10,
                     url_llama='http://localhost:11434',
                     papel_do_LLM=None,
                     verbose=True):
@@ -45,7 +46,7 @@ class GeradorDeRespostas:
         )
 
         if verbose: print('--- gerando retriever (gerenciador de consultas)...')
-        self.gerenciador_de_consulta = self.banco_de_vetores.as_retriever(search_type=tipo_de_busca, search_kwargs={'score_threshold':limiar_score_similaridade, 'k': 10})
+        self.gerenciador_de_consulta = self.banco_de_vetores.as_retriever(search_type=tipo_de_busca, search_kwargs={'score_threshold':limiar_score_similaridade, 'k':numero_de_documentos_retornados})
 
         if verbose: print('--- gerando a interface com o LLM...')
         self.interface_llama = ChatOllama(
