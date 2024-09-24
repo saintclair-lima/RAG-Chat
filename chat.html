@@ -138,14 +138,14 @@
             var divPergunta = document.createElement('div');
             divPergunta.className = 'text-box';
             divPergunta.textContent = input;
-            divPergunta.classList.add('align-left');
+            divPergunta.classList.add('align-right');
             document.getElementById('displayArea').appendChild(divPergunta);
 
             
             var divResposta = document.createElement('div');
             divResposta.className = 'text-box';
             divResposta.innerHTML = "<i>Buscando Resposta<i> <div class='loader'></div>";
-            divResposta.classList.add('align-right');
+            divResposta.classList.add('align-left');
             document.getElementById('displayArea').appendChild(divResposta);
 
             fetch("http://127.0.0.1:8000/hilda/enviar_pergunta/", {
