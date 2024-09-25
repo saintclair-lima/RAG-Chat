@@ -20,14 +20,21 @@ class GeradorDeRespostas:
     def __init__(self, url_banco_vetores,
                     funcao_de_embeddings=None,
                     device='cpu',
-                    # tipo_de_busca='mmr',
+                    tipo_de_busca='mmr',
                     # tipo_de_busca='similarity',
-                    tipo_de_busca='similarity_score_threshold',
-                    limiar_score_similaridade=.6,
-                    numero_de_documentos_retornados=10,
+                    # tipo_de_busca='similarity_score_threshold',
                     url_llama='http://localhost:11434',
                     papel_do_LLM=None,
+                    numero_de_documentos_retornados=5,
+                    limiar_score_similaridade=.6,
                     verbose=True):
+        
+        if tipo_de_busca == 'mmr':
+            argumentos_de_busca={'k':numero_de_documentos_retornados}
+        elif tipo_de_busca == 'similarity':
+            argumentos_de_busca={'k':numero_de_documentos_retornados}
+        elif tipo_de_busca == 'similarity_score_threshold':
+            argumentos_de_busca={'score_threshold':limiar_score_similaridade, 'k':numero_de_documentos_retornados}
 
         if not funcao_de_embeddings:
             from langchain_huggingface import HuggingFaceEmbeddings
@@ -46,7 +53,7 @@ class GeradorDeRespostas:
         )
 
         if verbose: print('--- gerando retriever (gerenciador de consultas)...')
-        self.gerenciador_de_consulta = self.banco_de_vetores.as_retriever(search_type=tipo_de_busca, search_kwargs={'score_threshold':limiar_score_similaridade, 'k':numero_de_documentos_retornados})
+        self.gerenciador_de_consulta = self.banco_de_vetores.as_retriever(search_type=tipo_de_busca, search_kwargs=argumentos_de_busca)
 
         if verbose: print('--- gerando a interface com o LLM...')
         self.interface_llama = ChatOllama(

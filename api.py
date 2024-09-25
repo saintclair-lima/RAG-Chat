@@ -5,7 +5,7 @@ from starlette.middleware.cors import CORSMiddleware
 from langchain_huggingface import HuggingFaceEmbeddings
 from gerador_de_respostas import GeradorDeRespostas, DadosChat
 
-URL_BANCO_VETORES = 'banco_vetores'
+URL_BANCO_VETORES = 'banco_vetores_alrn'
 
 print('Instanciando a api (FastAPI)')
 app = FastAPI()
@@ -30,7 +30,7 @@ print('Definindo as rotas')
 
 
 @app.post("/hilda/enviar_pergunta/")
-async def get_embedding(dadosRecebidos: DadosChat):
+async def gerarResposta(dadosRecebidos: DadosChat):
     dados_resposta = gerador_de_respostas.consultar(dadosRecebidos)
     return {"dados_resposta": dados_resposta}
 
