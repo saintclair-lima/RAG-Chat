@@ -6,6 +6,9 @@ from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from pydantic import BaseModel
 
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
+
 from time import time
 
 class DadosChat(BaseModel):
@@ -28,6 +31,10 @@ class GeradorDeRespostas:
                     numero_de_documentos_retornados=5,
                     limiar_score_similaridade=.6,
                     verbose=True):
+        
+        self.executor = ThreadPoolExecutor(max_workers=10)
+        # If you're deploying this API using a web server like uvicorn or gunicorn, consider increasing the number of workers in production when deploying the API.
+        # Run on bash: uvicorn main:app --workers 5
         
         if tipo_de_busca == 'mmr':
             argumentos_de_busca={'k':numero_de_documentos_retornados}
@@ -98,8 +105,14 @@ class GeradorDeRespostas:
     def formatar_documentos_recuperados(self, docs):
             '''Função de formatação dos documentos. 'docs' é uma lista de objetos do tipo langchain_core.documents.Document'''
             return "\n\n\n\n".join([f'{doc.metadata['titulo']}, {doc.page_content}' for doc in docs])
+    
+    async def consultar(self, dadosChat: DadosChat, verbose=True):
+        loop = asyncio.get_event_loop()
 
-    def consultar(self, dadosChat: DadosChat, verbose=True):
+        # Run the consulta process in a separate thread to avoid blocking
+        return await loop.run_in_executor(self.executor, self._sync_consultar, dadosChat, verbose)
+
+    def _sync_consultar(self, dadosChat: DadosChat, verbose=True):
         '''Recebe uma pergunta, em formato de string, realiza uma consulta no banco de vetores,
         passa os resultados para o LLM gerar uma resposta palatável e a retorna'''
 

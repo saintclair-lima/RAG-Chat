@@ -31,7 +31,7 @@ print('Definindo as rotas')
 
 @app.post("/hilda/enviar_pergunta/")
 async def gerarResposta(dadosRecebidos: DadosChat):
-    dados_resposta = gerador_de_respostas.consultar(dadosRecebidos)
+    dados_resposta = await gerador_de_respostas.consultar(dadosRecebidos)
     return {"dados_resposta": dados_resposta}
 
 
