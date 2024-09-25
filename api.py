@@ -1,6 +1,6 @@
 print('Inicializando a estrutura da API...\nImportando as bibliotecas...')
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from starlette.middleware.cors import CORSMiddleware
 from langchain_huggingface import HuggingFaceEmbeddings
 from gerador_de_respostas import GeradorDeRespostas, DadosChat
@@ -29,15 +29,19 @@ gerador_de_respostas = GeradorDeRespostas(funcao_de_embeddings=funcao_de_embeddi
 print('Definindo as rotas')
 
 
-@app.post("/hilda/enviar_pergunta/")
+@app.post("/chat/enviar_pergunta/")
 async def gerarResposta(dadosRecebidos: DadosChat):
     dados_resposta = await gerador_de_respostas.consultar(dadosRecebidos)
     return {"dados_resposta": dados_resposta}
 
 
-@app.get("/hilda/")
+@app.get("/chat/")
 async def pagina_chat():
     with open('chat.html', 'r', encoding='utf-8') as arquivo: conteudo_html = arquivo.read()
     return HTMLResponse(content=conteudo_html, status_code=200)
+
+@app.get("/favicon.ico")
+async def favicon():
+    return FileResponse("assets/img/favicon/favicon.ico")
 
 print('API inicializada')
