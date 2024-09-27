@@ -186,7 +186,8 @@
                         divResposta.innerHTML = formatarResposta(dados_resposta);
                         historico_chat = resultadoJson.dados_resposta.historico;
                     } catch (erro) {
-                        console.log(erro)
+                        // sempre executa no final da geração da resposta e obtenção dos metadados gerados
+                        // console.log(erro);
                     }
                 }
             }

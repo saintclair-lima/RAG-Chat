@@ -109,7 +109,7 @@ class GeradorDeRespostas:
             return "\n\n\n\n".join([f'{doc.metadata['titulo']}, {doc.page_content}' for doc in docs])
     
     async def gerar_resposta(self, dadosChat: DadosChat):
-        # Streaming response back to the client
+        # enviando a resposta por streaming ao usuário
         return StreamingResponse(self.consultar(dadosChat), media_type="text/plain")
 
     async def consultar(self, dadosChat: DadosChat, verbose=True):
@@ -150,7 +150,6 @@ class GeradorDeRespostas:
         dadosChat.historico.append(("human", pergunta))
         dadosChat.historico.append(("ai", resposta_formatada))
         yield "CHEGOU_AO_FIM_DO_TEXTO_DA_RESPOSTA"
-        print(resposta_formatada.replace('\n\n', '\n'))
         yield json.dumps(
             {
                 "pergunta": pergunta,
