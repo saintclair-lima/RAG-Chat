@@ -116,23 +116,24 @@
     <script>
         var historico_chat = []
 
-        function formatarResposta(resultadoJson){
+        function formatarResposta(dados_resposta){            
             var textoResposta = 
-                resultadoJson.dados_resposta.resposta.split('\n').map((linha) => {
+                dados_resposta.resposta.split('\n').map((linha) => {
                     return `<p>${linha}</p>\n`
                 }).join('\n') + 
 
                 "<hr>\n<p><b>Fontes</b></p>\n<div style='font-size: smaller;font-style: italic;'>\n" + 
 
-                resultadoJson.dados_resposta.documentos.map((documento) => {
-                    return `<p><b>${documento.metadata.titulo}</b><br>${documento.page_content}</p>`
+                dados_resposta.documentos.map((documento) => {
+                    documentoJSON = JSON.parse(documento)
+                    return `<p><b>${documentoJSON.metadata.titulo}</b><br>${documentoJSON.page_content}</p>`
                 }).join('\n') + 
                 
                 `</div>`;
             return textoResposta;
         }
 
-        function submitText() {
+        async function submitText() {
             var input = document.getElementById('textInput').value;
             document.getElementById('textInput').value = '';
             var divPergunta = document.createElement('div');
@@ -148,7 +149,7 @@
             divResposta.classList.add('align-left');
             document.getElementById('displayArea').appendChild(divResposta);
 
-            fetch("http://127.0.0.1:8000/hilda/enviar_pergunta/", {
+            const response = await fetch("http://127.0.0.1:8000/chat/enviar_pergunta/", {
                 method: "POST",
                 body: JSON.stringify({
                     pergunta: input,
@@ -157,13 +158,39 @@
                 headers: {
                     "Content-type": "application/json; charset=UTF-8"
                 }
-                })
-                .then((resultado) => resultado.json())
-                .then((resultadoJson) => {
-                    divResposta.innerHTML = formatarResposta(resultadoJson);
-                    historico_chat = resultadoJson.dados_resposta.historico;
                 });
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder("utf-8");
+            const chatOutput = document.getElementById("chat-output");
+            let recebeuFlagFimMensagem = false;
+            let textoAcumulado = '<p>';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                const chunk = decoder.decode(value, { stream: true });
+                textoAcumulado += chunk;
+
+                if (chunk == 'CHEGOU_AO_FIM_DO_TEXTO_DA_RESPOSTA'){
+                    recebeuFlagFimMensagem = true;
+                }
+
+                if (textoAcumulado!='' && !recebeuFlagFimMensagem){
+                    divResposta.innerHTML = textoAcumulado.replaceAll('\n', '</p><p>');
+                }
+
+                if (recebeuFlagFimMensagem) {
+                    try {
+                        const dados_resposta = JSON.parse(chunk);
+                        divResposta.innerHTML = formatarResposta(dados_resposta);
+                        historico_chat = resultadoJson.dados_resposta.historico;
+                    } catch (erro) {
+                        console.log(erro)
+                    }
+                }
             }
+        }
     </script>
 </body>
 </html>

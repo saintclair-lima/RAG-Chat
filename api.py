@@ -1,6 +1,6 @@
 print('Inicializando a estrutura da API...\nImportando as bibliotecas...')
 from fastapi import FastAPI
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 from starlette.middleware.cors import CORSMiddleware
 from langchain_huggingface import HuggingFaceEmbeddings
 from gerador_de_respostas import GeradorDeRespostas, DadosChat
@@ -29,10 +29,16 @@ gerador_de_respostas = GeradorDeRespostas(funcao_de_embeddings=funcao_de_embeddi
 print('Definindo as rotas')
 
 
+# @app.post("/chat/enviar_pergunta/")
+# async def gerarResposta(dadosRecebidos: DadosChat):
+#     dados_resposta = await gerador_de_respostas.consultar(dadosRecebidos)
+#     return {"dados_resposta": dados_resposta}
+
 @app.post("/chat/enviar_pergunta/")
-async def gerarResposta(dadosRecebidos: DadosChat):
-    dados_resposta = await gerador_de_respostas.consultar(dadosRecebidos)
-    return {"dados_resposta": dados_resposta}
+async def gerar_resposta(dadosRecebidos: DadosChat):
+    # dados_resposta = await gerador_de_respostas.gerar_resposta(dadosRecebidos)
+    # return {"dados_resposta": dados_resposta}
+    return StreamingResponse(gerador_de_respostas.consultar(dadosRecebidos), media_type="text/plain")
 
 
 @app.get("/chat/")

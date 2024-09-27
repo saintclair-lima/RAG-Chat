@@ -1,3 +1,4 @@
+from fastapi.responses import StreamingResponse
 from langchain_chroma import Chroma
 from langchain_ollama import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
@@ -5,6 +6,7 @@ from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from pydantic import BaseModel
+import json
 
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
@@ -106,13 +108,11 @@ class GeradorDeRespostas:
             '''Função de formatação dos documentos. 'docs' é uma lista de objetos do tipo langchain_core.documents.Document'''
             return "\n\n\n\n".join([f'{doc.metadata['titulo']}, {doc.page_content}' for doc in docs])
     
+    async def gerar_resposta(self, dadosChat: DadosChat):
+        # Streaming response back to the client
+        return StreamingResponse(self.consultar(dadosChat), media_type="text/plain")
+
     async def consultar(self, dadosChat: DadosChat, verbose=True):
-        loop = asyncio.get_event_loop()
-
-        # Run the consulta process in a separate thread to avoid blocking
-        return await loop.run_in_executor(self.executor, self._sync_consultar, dadosChat, verbose)
-
-    def _sync_consultar(self, dadosChat: DadosChat, verbose=True):
         '''Recebe uma pergunta, em formato de string, realiza uma consulta no banco de vetores,
         passa os resultados para o LLM gerar uma resposta palatável e a retorna'''
 
@@ -135,7 +135,13 @@ class GeradorDeRespostas:
         
         if verbose: print(f'--- gerando resposta com o Llama')
         marcador_tempo_inicio = time()
-        resposta_llama = self.interface_llama.invoke(prompt_llama)
+        texto_resposta_llama = ''
+        for item in self.interface_llama.stream(prompt_llama):
+            texto_resposta_llama += item.content
+            yield item.content
+        
+        item.content = texto_resposta_llama
+        resposta_llama = item
         marcador_tempo_fim = time()
         tempo_llama = marcador_tempo_fim - marcador_tempo_inicio
         if verbose: print(f'--- resposta gerada em ({tempo_llama} segundos)')
@@ -143,14 +149,17 @@ class GeradorDeRespostas:
 
         dadosChat.historico.append(("human", pergunta))
         dadosChat.historico.append(("ai", resposta_formatada))
-
-        return {
-            'pergunta': pergunta,
-            'documentos': documentos_retornados,
-            'contexto': prompt_llama.messages[1].content,
-            'resposta_llama': resposta_llama,
-            'resposta': resposta_formatada,
-            'historico': dadosChat.historico,
-            'tempo_consulta': tempo_consulta,
-            'tempo_llama': tempo_llama
-            }
+        yield "CHEGOU_AO_FIM_DO_TEXTO_DA_RESPOSTA"
+        print(resposta_formatada.replace('\n\n', '\n'))
+        yield json.dumps(
+            {
+                "pergunta": pergunta,
+                "documentos": [item.model_dump_json() for item in documentos_retornados],
+                "contexto": prompt_llama.messages[1].content,
+                "resposta_llama": resposta_llama.model_dump_json(),
+                "resposta": resposta_formatada.replace('\n\n', '\n'),
+                "historico": dadosChat.historico,
+                "tempo_consulta": tempo_consulta,
+                "tempo_llama": tempo_llama
+                }
+            )
