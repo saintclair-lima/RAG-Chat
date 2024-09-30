@@ -184,7 +184,7 @@
                     try {
                         const dados_resposta = JSON.parse(chunk);
                         divResposta.innerHTML = formatarResposta(dados_resposta);
-                        historico_chat = resultadoJson.dados_resposta.historico;
+                        historico_chat = dados_resposta.historico;
                     } catch (erro) {
                         // sempre executa no final da geração da resposta e obtenção dos metadados gerados
                         // console.log(erro);

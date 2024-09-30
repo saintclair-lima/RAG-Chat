@@ -2,9 +2,9 @@ from fastapi.responses import StreamingResponse
 from langchain_chroma import Chroma
 from langchain_ollama import ChatOllama
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
+# from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
+# from langchain_core.runnables import RunnablePassthrough
 from pydantic import BaseModel
 import json
 
@@ -108,6 +108,12 @@ class GeradorDeRespostas:
             '''Função de formatação dos documentos. 'docs' é uma lista de objetos do tipo langchain_core.documents.Document'''
             return "\n\n\n\n".join([f'{doc.metadata['titulo']}, {doc.page_content}' for doc in docs])
     
+    async def async_stream_wrapper(self, sync_generator):
+        """Run the synchronous generator in an executor to yield its items as they become available."""
+        loop = asyncio.get_running_loop()
+        for item in sync_generator:
+            yield await loop.run_in_executor(self.executor, lambda x=item: x)
+    
     async def gerar_resposta(self, dadosChat: DadosChat):
         # enviando a resposta por streaming ao usuário
         return StreamingResponse(self.consultar(dadosChat), media_type="text/plain")
@@ -117,7 +123,8 @@ class GeradorDeRespostas:
         passa os resultados para o LLM gerar uma resposta palatável e a retorna'''
 
         pergunta = dadosChat.pergunta
-        historico_chat = []
+        historico_chat = [(("human", item[0]), ("ai", item[1])) for item in dadosChat.historico]
+
 
         for item in dadosChat.historico:
             historico_chat.append(("human", item[0]))
@@ -126,17 +133,21 @@ class GeradorDeRespostas:
         if verbose: print('Gerador de respostas: realizando consulta...')
         if verbose: print(f'--- Pergunta feita: {pergunta}')
         marcador_tempo_inicio = time()
-        documentos_retornados = self.gerenciador_de_consulta.invoke(pergunta)
+        # documentos_retornados = self.gerenciador_de_consulta.invoke(pergunta)
+        documentos_retornados = await asyncio.to_thread(self.gerenciador_de_consulta.invoke, pergunta)
         marcador_tempo_fim = time()
         tempo_consulta = marcador_tempo_fim - marcador_tempo_inicio
         if verbose: print(f'--- consulta no banco concluída ({tempo_consulta} segundos)')
-        contexto = self.formatar_documentos_recuperados(documentos_retornados)
+        # contexto = self.formatar_documentos_recuperados(documentos_retornados)
+        contexto = await asyncio.to_thread(self.formatar_documentos_recuperados, documentos_retornados)
         prompt_llama = self.template_do_prompt.invoke({"pergunta": pergunta, "contexto": contexto, 'historico_chat': historico_chat})
         
         if verbose: print(f'--- gerando resposta com o Llama')
         marcador_tempo_inicio = time()
         texto_resposta_llama = ''
-        for item in self.interface_llama.stream(prompt_llama):
+
+        # Wrap the synchronous stream in an asynchronous generator
+        async for item in self.async_stream_wrapper(self.interface_llama.stream(prompt_llama)):
             texto_resposta_llama += item.content
             yield item.content
         
