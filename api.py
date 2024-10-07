@@ -5,7 +5,7 @@ from starlette.middleware.cors import CORSMiddleware
 from langchain_huggingface import HuggingFaceEmbeddings
 from gerador_de_respostas import GeradorDeRespostas, DadosChat
 
-URL_BANCO_VETORES = 'banco_vetores_alrn'
+URL_BANCO_VETORES = 'banco_vetores_alrn_adicional'
 
 print('Instanciando a api (FastAPI)')
 app = FastAPI()

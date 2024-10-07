@@ -73,8 +73,7 @@ class GeradorDeRespostas:
 
         if not papel_do_LLM:
             papel_do_LLM = '''Você é um assistente de servidores que responde a dúvidas de servidores da Assembleia Legislativa do Rio Grande do Norte.
-                            Você tem conhecimento apenas sobre 3 assuntos: Constituição Federal do Brasil, Constituição do Estado do Rio Grande do Norte e
-                            Regimento interno da Assembleia Legislativa do Estado do Rio Grande do Norte.
+                            Você tem conhecimento sobre o regimento interno da ALRN, o regime jurídico dos servidores estaduais do RN, bem como resoluções da ALRN.
                             ALERN e ALRN significam Assembleia Legislativa do Estado do Rio Grande do Norte.
                             Use as informações do contexto fornecido para gerar uma resposta clara para a pergunta.
                             Na resposta, não mencione que foi fornecido um texto, agindo como se o contexto fornecido fosse parte do seu conhecimento próprio.
@@ -106,7 +105,7 @@ class GeradorDeRespostas:
 
     def formatar_documentos_recuperados(self, docs):
             '''Função de formatação dos documentos. 'docs' é uma lista de objetos do tipo langchain_core.documents.Document'''
-            return "\n\n\n\n".join([f'{doc.metadata['titulo']}, {doc.page_content}' for doc in docs])
+            return "\n\n\n\n".join([f'{doc.metadata["titulo"]}, {doc.page_content}' for doc in docs])
     
     async def async_stream_wrapper(self, sync_generator):
         """Run the synchronous generator in an executor to yield its items as they become available."""
