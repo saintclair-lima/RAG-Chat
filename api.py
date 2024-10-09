@@ -5,7 +5,7 @@ from starlette.middleware.cors import CORSMiddleware
 from langchain_huggingface import HuggingFaceEmbeddings
 from gerador_de_respostas import GeradorDeRespostas, DadosChat
 
-import var_ambiente
+import configuracoes
 
 print('Instanciando a api (FastAPI)')
 app = FastAPI()
@@ -17,14 +17,14 @@ app.add_middleware(
     allow_headers=['*'],  # Allow all headers
 )
 
-print(f'Criando a função de embeddings com {var_ambiente.MODELO_DE_EMBEDDINGS}')
+print(f'Criando a função de embeddings com {configuracoes.MODELO_DE_EMBEDDINGS}')
 funcao_de_embeddings = HuggingFaceEmbeddings(
-    model_name=var_ambiente.MODELO_DE_EMBEDDINGS,
+    model_name=configuracoes.MODELO_DE_EMBEDDINGS,
     show_progress=True,
-    model_kwargs={'device': var_ambiente.DEVICE}
+    model_kwargs={'device': configuracoes.DEVICE}
 )
 
-gerador_de_respostas = GeradorDeRespostas(funcao_de_embeddings=funcao_de_embeddings, url_banco_vetores=var_ambiente.URL_BANCO_VETORES)
+gerador_de_respostas = GeradorDeRespostas(funcao_de_embeddings=funcao_de_embeddings, url_banco_vetores=configuracoes.URL_BANCO_VETORES)
 
 print('Definindo as rotas')
 # @app.post('/chat/enviar_pergunta/')

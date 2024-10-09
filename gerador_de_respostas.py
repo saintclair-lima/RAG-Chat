@@ -7,7 +7,7 @@ from langchain_core.output_parsers import StrOutputParser
 # from langchain_core.runnables import RunnablePassthrough
 from pydantic import BaseModel
 import json
-import var_ambiente
+import configuracoes
 
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
@@ -25,15 +25,15 @@ class GeradorDeRespostas:
     '''
     def __init__(self, url_banco_vetores,
                     funcao_de_embeddings=None,
-                    device=var_ambiente.DEVICE,
-                    tipo_de_busca=var_ambiente.TIPO_DE_BUSCA,                   
-                    url_llama=var_ambiente.URL_LLAMA,
+                    device=configuracoes.DEVICE,
+                    tipo_de_busca=configuracoes.TIPO_DE_BUSCA,                   
+                    url_llama=configuracoes.URL_LLAMA,
                     papel_do_LLM=None,
-                    numero_de_documentos_retornados=var_ambiente.NUM_DOCUMENTOS_RETORNADOS,
-                    limiar_score_similaridade=var_ambiente.LIMIAR_SCORE_SIMILARIDADE,
+                    numero_de_documentos_retornados=configuracoes.NUM_DOCUMENTOS_RETORNADOS,
+                    limiar_score_similaridade=configuracoes.LIMIAR_SCORE_SIMILARIDADE,
                     verbose=True):
         
-        self.executor = ThreadPoolExecutor(max_workers=var_ambiente.THREADPOOL_MAX_WORKERS)
+        self.executor = ThreadPoolExecutor(max_workers=configuracoes.THREADPOOL_MAX_WORKERS)
         # If you're deploying this API using a web server like uvicorn or gunicorn, consider increasing the number of workers in production when deploying the API.
         # Run on bash: uvicorn main:app --workers 5
         
@@ -45,12 +45,12 @@ class GeradorDeRespostas:
             argumentos_de_busca={'score_threshold':limiar_score_similaridade, 'k':numero_de_documentos_retornados}
 
         if not funcao_de_embeddings:
-            print(f'Criando a função de embeddings com {var_ambiente.MODELO_DE_EMBEDDINGS}')
+            print(f'Criando a função de embeddings com {configuracoes.MODELO_DE_EMBEDDINGS}')
             from langchain_huggingface import HuggingFaceEmbeddings
             funcao_de_embeddings = HuggingFaceEmbeddings(
-                model_name=var_ambiente.MODELO_DE_EMBEDDINGS,
+                model_name=configuracoes.MODELO_DE_EMBEDDINGS,
                 show_progress=True,
-                model_kwargs={"device": var_ambiente.DEVICE},
+                model_kwargs={"device": configuracoes.DEVICE},
             )
 
         
