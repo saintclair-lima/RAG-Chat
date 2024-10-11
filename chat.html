@@ -128,26 +128,10 @@
     </style>
 
     <style>
-        .loader {
-            border: 5px solid #f3f3f3;
-            border-radius: 50%;
-            border-top: 5px solid #3498db;
-            width: 10px;
-            height: 10px;
-            -webkit-animation: spin 1s linear infinite; /* Safari */
-            animation: spin 1s linear infinite;
-            }
-            
-            /* Safari */
-            @-webkit-keyframes spin {
-            0% { -webkit-transform: rotate(0deg); }
-            100% { -webkit-transform: rotate(360deg); }
-            }
-            
-            @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+         @keyframes dot-blink { 0%, 66% {opacity: 1;} 67%, 100% {opacity: 0;} }
+        .dot1 {animation: dot-blink 2s infinite; animation-delay: 0s; font-weight: bolder; font-size: large;}
+        .dot2 {animation: dot-blink 2s infinite; animation-delay: 0.5s; font-weight: bolder; font-size: large;}
+        .dot3 {animation: dot-blink 2s infinite; animation-delay: 1s; font-weight: bolder; font-size: large;}
     </style>
 </head>
 <body>
@@ -210,7 +194,7 @@
             
             var divResposta = document.createElement('div');
             divResposta.className = 'text-box';
-            divResposta.innerHTML = "<i>Buscando Resposta<i> <div class='loader'></div>";
+            divResposta.innerHTML = "<i>Digitando Resposta<i> <span class='dot1'>.</span><span class='dot2'>.</span><span class='dot3'>.</span>";
             divResposta.classList.add('align-left');
             divResposta.classList.add('mensagem-recebida');
             document.getElementById('displayArea').appendChild(divResposta);
@@ -235,11 +219,12 @@
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
-                const chunk = decoder.decode(value, { stream: true });
-                textoAcumulado += chunk;
+                const fragmento_resposta = decoder.decode(value, { stream: true });
+                textoAcumulado += fragmento_resposta;
 
-                if (chunk == 'CHEGOU_AO_FIM_DO_TEXTO_DA_RESPOSTA'){
+                if (fragmento_resposta.includes('CHEGOU_AO_FIM_DO_TEXTO_DA_RESPOSTA')){
                     recebeuFlagFimMensagem = true;
+                    textoAcumulado = textoAcumulado.split('CHEGOU_AO_FIM_DO_TEXTO_DA_RESPOSTA')[0];
                 }
 
                 if (textoAcumulado!='' && !recebeuFlagFimMensagem){
@@ -248,13 +233,18 @@
 
                 if (recebeuFlagFimMensagem) {
                     try {
-                        const dados_resposta = JSON.parse(chunk);
+                        var dados_resposta;
+                        if (fragmento_resposta.includes('CHEGOU_AO_FIM_DO_TEXTO_DA_RESPOSTA')){
+                            dados_resposta = JSON.parse(fragmento_resposta.split('CHEGOU_AO_FIM_DO_TEXTO_DA_RESPOSTA')[1]);
+                        } else {
+                            dados_resposta = JSON.parse(fragmento_resposta);
+                        }
                         divResposta.innerHTML = formatarResposta(dados_resposta);
                         historico_chat = dados_resposta.historico;
-                        console.log(dados_resposta)
                     } catch (erro) {
-                        // sempre executa no final da geração da resposta e obtenção dos metadados gerados
-                        // console.log(erro);
+                        // sempre executa no final da geração da resposta e antes da obtenção dos metadados gerados
+                        console.log(erro);
+                        console.log(fragmento_resposta)
                     }
                     
                     document.getElementById('botaoEnviar').removeAttribute("disabled");
