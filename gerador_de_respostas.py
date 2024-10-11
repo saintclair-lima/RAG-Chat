@@ -134,6 +134,92 @@ class GeradorDeRespostas:
         marcador_tempo_inicio = time()
         # documentos_retornados = self.gerenciador_de_consulta.invoke(pergunta)
         documentos_retornados = await asyncio.to_thread(self.gerenciador_de_consulta.invoke, pergunta)
+
+
+
+        # PARTE EXPERIMENTAL
+
+        # def get_top_answers(possible_starts,possible_ends,input_ids):
+        #     answers = []
+        #     for start,end in zip(possible_starts,possible_ends):
+        #         #+1 for end
+        #         answer = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(input_ids[start:end+1]))
+        #         answers.append( answer )
+        #     return answers
+
+        # def answer_question(question_inputs, context_inputs, topN=10):
+
+        #     # Combine the question and context tokens
+        #     input_ids = torch.cat([question_inputs, context_inputs[:, 1:]], dim=1)
+
+        #     # Create the attention mask by combining both masks
+        #     attention_mask = torch.cat([question_inputs["attention_mask"], context_inputs["attention_mask"][:, 1:]], dim=1)
+
+        #     inputs = {
+        #         "input_ids": input_ids,
+        #         "attention_mask": attention_mask,
+        #     }
+
+        #     text_tokens = tokenizer.convert_ids_to_tokens(input_ids.tolist()[0])
+        #     # create the embeddings
+        #     model_out = model(**inputs)
+
+        #     answer_start_scores = model_out["start_logits"]
+        #     answer_end_scores = model_out["end_logits"]
+
+        #     possible_starts = np.argsort(answer_start_scores.cpu().detach().numpy()).flatten()[::-1][:topN] #Coloca somente a primeira resposta?
+        #     possible_ends = np.argsort(answer_end_scores.cpu().detach().numpy()).flatten()[::-1][:topN]     #Coloca somente a primeira resposta?
+
+        #     # Get best answer
+        #     answer_start = torch.argmax(answer_start_scores)
+        #     answer_end = torch.argmax(answer_end_scores) + 1  # Get the most likely end of answer with the argmax of the score
+
+        #     answer = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(input_ids[0][answer_start:answer_end]))
+        #     answers = get_top_answers(possible_starts, possible_ends, input_ids[0].tolist())
+
+        #     return {
+        #         "answer": answer,
+        #         "answer_start": answer_start,
+        #         "answer_end": answer_end,
+        #         "input_ids": input_ids.tolist()[0],
+        #         "answer_start_scores": answer_start_scores,
+        #         "answer_end_scores": answer_end_scores,
+        #         "inputs": inputs,
+        #         "answers": answers,
+        #         "possible_starts": possible_starts,
+        #         "possible_ends": possible_ends
+        #     }
+
+        # nome_modelo = 'pierreguillou/bert-base-cased-squad-v1.1-portuguese'
+
+        # from transformers import pipeline
+        # from transformers import AutoTokenizer, AutoModelForQuestionAnswering, BertModel, BertTokenizer
+        # import torch
+        # import numpy as np
+        # import torch.nn.functional as F
+
+        # tokenizer = AutoTokenizer.from_pretrained(nome_modelo)
+        # model = AutoModelForQuestionAnswering.from_pretrained(nome_modelo, gradient_checkpointing=True)
+
+        # lista_inputs_contexto = [tokenizer.encode_plus('', documento.page_content, add_special_tokens=True, return_tensors="pt") for documento in documentos_retornados]
+        # # ic = tokenizer.encode_plus('', documentos_retornados[0].page_content, add_special_tokens=True, return_tensors="pt")
+        # # print(ic)
+        # lista_embeddings_contexto = [model(**inputs) for inputs in lista_inputs_contexto]
+
+        # inputs_pergunta = tokenizer.encode_plus(pergunta, '', add_special_tokens=True, return_tensors="pt")
+        # embedidngs_pergunta = model(**inputs_pergunta)
+
+
+
+        # for emb_contexto in lista_embeddings_contexto:
+        #     print(f'================================')
+        #     print(answer_question(embedidngs_pergunta, emb_contexto))
+        #     print(f'\n--------------------------------\n')
+
+        ## FIM DA PARTE EXPERIMENTAL
+
+
+
         marcador_tempo_fim = time()
         tempo_consulta = marcador_tempo_fim - marcador_tempo_inicio
         if verbose: print(f'--- consulta no banco concluída ({tempo_consulta} segundos)')
