@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Título que fique discreto no histórico de navegação</title>
+    <title>Legisberto</title>
     <style>
         body {
             margin: 0;
@@ -28,6 +28,7 @@
         .top-area {
             flex: 1;
             border: 1px solid #ccc;
+            margin-bottom: 20px;
             padding: 10px;
             overflow: auto;
             background-color: #e9ecef;
@@ -49,10 +50,43 @@
             justify-content:space-between
         }
         .align-left {
-            text-align: left;
+            align-self: flex-start;
         }
         .align-right {
             align-self: flex-end;
+        }
+        .div-cabecalho {
+            background: rgb(156, 182, 187);
+            background: linear-gradient(90deg, rgb(156, 182, 187) 24%, rgb(44, 44, 82) 84%);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        .img-legisberto {
+            margin: 5px;
+            height: 70px;
+            border-radius: 50%;
+            border-style: solid;
+            border-width: 5px;
+            border-color: rgb(4, 211, 4);
+            box-shadow:  0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+        }
+        .rotulo-legisberto {
+            margin-left: 30px;
+            font-size: 30px;
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+            font-weight: bold;
+            color: white;
+        }
+        .mensagem-enviada {
+            align-self: flex-end;
+            background-color: rgb(222, 255, 251);
+            border-color: rgb(141, 187, 182);
+        }
+        .mensagem-recebida {
+            align-self: flex-start;
+            background-color: rgb(222, 230, 255);
+            border-color: rgb(161, 175, 238);
         }
         .bottom-area {
             display: flex;
@@ -64,9 +98,7 @@
             height: 37px;
             margin-bottom: 10px;
             border: 1px solid #ccc;
-            border-radius: 4px;
-
-            
+            border-radius: 4px;            
         }
         #textInput:disabled {
             background-color: #ccc;
@@ -120,8 +152,22 @@
 </head>
 <body>
     <div class="container">
+        <div class="div-cabecalho">
+            <img src="/assets/img/Legisberto.png" class="img-legisberto">
+            <span class="rotulo-legisberto">Legisberto</span>
+        </div>
         <div class="top-area" id="displayArea">
             <!-- Divs das mensagens serão adicionadas aqui -->
+             <div class="text-box mensagem-recebida">
+                <p>Oi! 😊</p>
+                <p>Eu sou Legisberto, um assistente de busca de conteúdo em documentos normativos da ALRN.</p>
+                <p>Posso responder perguntas sobre o Regimento Interno da ALRN e resoluções que tratam do Auxílio de Assistência à Saúde, 
+                    da Base de Cálculo de Férias e Décimo Terceiro, da Avaliação de Desempenho de Estágio Probatório, do Plano de Cargos e Carreira 
+                    e da Substituição de Férias de Cargos Comissionados ou Funções Gratificadas.</p>
+                <p>Para facilitar, peço a gentileza de fazer perguntas detalhadas e específicas. Farei o possível para encontrar a resposta.</p>
+                <p>Tenha em mente que, como estou em fase de testes, é possível que minhas respostas tenham algumas incorreções. 
+                    É importante verificar os documentos normativos diretamente, em caso de dúvida.</p>
+             </div>
         </div>
         <div class="bottom-area">
             <input type="text" id="textInput" placeholder="Digite sua pergunta">
@@ -158,6 +204,7 @@
             divPergunta.className = 'text-box';
             divPergunta.textContent = input;
             divPergunta.classList.add('align-right');
+            divPergunta.classList.add('mensagem-enviada');
             document.getElementById('displayArea').appendChild(divPergunta);
 
             
@@ -165,6 +212,7 @@
             divResposta.className = 'text-box';
             divResposta.innerHTML = "<i>Buscando Resposta<i> <div class='loader'></div>";
             divResposta.classList.add('align-left');
+            divResposta.classList.add('mensagem-recebida');
             document.getElementById('displayArea').appendChild(divResposta);
 
             const response = await fetch("http://127.0.0.1:8000/chat/enviar_pergunta/", {

@@ -48,4 +48,8 @@ async def pagina_chat():
 async def favicon():
     return FileResponse('assets/img/favicon/favicon.ico')
 
+@app.get('/assets/img/Legisberto.png')
+async def legisberto():
+    return FileResponse('assets/img/Legisberto.png')
+
 print('API inicializada')
