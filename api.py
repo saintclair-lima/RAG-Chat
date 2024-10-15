@@ -27,10 +27,6 @@ funcao_de_embeddings = HuggingFaceEmbeddings(
 gerador_de_respostas = GeradorDeRespostas(funcao_de_embeddings=funcao_de_embeddings, url_banco_vetores=configuracoes.URL_BANCO_VETORES)
 
 print('Definindo as rotas')
-# @app.post('/chat/enviar_pergunta/')
-# async def gerarResposta(dadosRecebidos: DadosChat):
-#     dados_resposta = await gerador_de_respostas.consultar(dadosRecebidos)
-#     return {'dados_resposta': dados_resposta}
 
 @app.post('/chat/enviar_pergunta/')
 async def gerar_resposta(dadosRecebidos: DadosChat):
@@ -44,12 +40,22 @@ async def pagina_chat():
     with open('chat.html', 'r', encoding='utf-8') as arquivo: conteudo_html = arquivo.read()
     return HTMLResponse(content=conteudo_html, status_code=200)
 
-@app.get('/favicon.ico')
-async def favicon():
-    return FileResponse('assets/img/favicon/favicon.ico')
+@app.get('/assets/img/favicon/favicon.ico')
+async def favicon(): return FileResponse('assets/img/favicon/favicon.ico')
+
+@app.get('/assets/img/favicon/favicon.svg')
+async def favicon(): return FileResponse('assets/img/favicon/favicon.svg')
+
+@app.get('/assets/img/favicon/favicon-48x48.png')
+async def favicon(): return FileResponse('assets/img/favicon/favicon-48x48.png')
+
+@app.get('/assets/img/favicon/apple-touch-icon.png')
+async def favicon(): return FileResponse('assets/img/favicon/apple-touch-icon.png')
+
+@app.get('/assets/img/favicon/site.webmanifest')
+async def favicon(): return FileResponse('assets/img/favicon/site.webmanifest')
 
 @app.get('/assets/img/Legisberto.png')
-async def legisberto():
-    return FileResponse('assets/img/Legisberto.png')
+async def legisberto(): return FileResponse('assets/img/Legisberto.png')
 
 print('API inicializada')

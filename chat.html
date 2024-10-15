@@ -2,6 +2,11 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8"/>
+    <link rel="icon" type="image/png" href="/assets/img/favicon/favicon-48x48.png" sizes="48x48" />
+    <link rel="icon" type="image/svg+xml" href="/assets/img/favicon/favicon.svg" />
+    <link rel="shortcut icon" href="/assets/img/favicon/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/img/favicon/apple-touch-icon.png" />
+    <link rel="manifest" href="/assets/img/favicon/site.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Legisberto</title>
     <style>
@@ -16,6 +21,7 @@
         }
         .container {
             width: 50%;
+            min-width: 300px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -25,7 +31,7 @@
             padding: 20px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        .top-area {
+        .container-mensagens {
             flex: 1;
             border: 1px solid #ccc;
             margin-bottom: 20px;
@@ -110,24 +116,26 @@
             left: -20px;
             top: 0px;
         } */
-        .bottom-area {
+        .container-envio-mensagens {
             display: flex;
             flex-direction: row;
             justify-content:space-between;
         }
-        #textInput {
-            width:80%;
+        #text-input {
+            width:100%;
             height: 37px;
             margin-bottom: 10px;
+            margin-right: 10px;
             border: 1px solid #ccc;
-            border-radius: 4px;            
+            border-radius: 4px;
+            padding-left: 10px;
         }
-        #textInput:disabled {
+        #text-input:disabled {
             background-color: #ccc;
         }
 
-        #botaoEnviar {
-            width:15%;
+        #botao-enviar {
+            width: 80px;
             height: 41px;
             border: none;
             border-radius: 4px;
@@ -135,14 +143,14 @@
             color: #fff;
             cursor: pointer;
         }
-        #botaoEnviar:hover {
+        #botao-enviar:hover {
             background-color: rgb(27, 44, 97);
         }
-        #botaoEnviar:disabled:hover {
+        #botao-enviar:disabled:hover {
             background-color: #9e9c9c;
             color: #616161;
         }
-        #botaoEnviar:disabled {
+        #botao-enviar:disabled {
             background-color: #9e9c9c;
             color: #616161;
             cursor:default;
@@ -150,12 +158,12 @@
     </style>
 
     <style>
-         @keyframes dot-blink1 { 0%, 66% {opacity: 1;} 67%, 100% {opacity: 0;} }
-         @keyframes dot-blink1 { 0%, 66% {opacity: 1;} 67%, 100% {opacity: 0;} }
-         @keyframes dot-blink1 { 0%, 66% {opacity: 1;} 67%, 100% {opacity: 0;} }
-        .dot1 {animation: dot-blink 2s infinite; animation-delay: 0s; font-weight: bolder; font-size: large;}
-        .dot2 {animation: dot-blink 2s infinite; animation-delay: 0.5s; font-weight: bolder; font-size: large;}
-        .dot3 {animation: dot-blink 2s infinite; animation-delay: 1s; font-weight: bolder; font-size: large;}
+         @keyframes dot-blink1 { 0%, 25% {opacity: 0;} 26%, 50% {opacity: 1;} 51%, 75% {opacity: 1;} 76%, 100% {opacity: 1;} }
+         @keyframes dot-blink2 { 0%, 25% {opacity: 0;} 26%, 50% {opacity: 0;} 51%, 75% {opacity: 1;} 76%, 100% {opacity: 1;} }
+         @keyframes dot-blink3 { 0%, 25% {opacity: 0;} 26%, 50% {opacity: 0;} 51%, 75% {opacity: 0;} 76%, 100% {opacity: 1;} }
+        .dot1 {animation: dot-blink1 2s infinite; font-weight: bolder; font-size: large;}
+        .dot2 {animation: dot-blink2 2s infinite; font-weight: bolder; font-size: large;}
+        .dot3 {animation: dot-blink3 2s infinite; font-weight: bolder; font-size: large;}
     </style>
 </head>
 <body>
@@ -164,7 +172,7 @@
             <img src="/assets/img/Legisberto.png" class="img-legisberto">
             <span class="rotulo-legisberto">Legisberto</span>
         </div>
-        <div class="top-area" id="displayArea">
+        <div class="container-mensagens" id="container-envio-mensagens">
             <!-- Divs das mensagens serão adicionadas aqui -->
              <div class="text-box mensagem-recebida">
                 <p>Oi! 😊</p>
@@ -177,16 +185,16 @@
                     É importante verificar os documentos normativos diretamente, em caso de dúvida.</p>
              </div>
         </div>
-        <div class="bottom-area">
-            <input type="text" id="textInput" placeholder="Digite sua pergunta">
-            <button onclick="submitText()" id="botaoEnviar">Enviar</button>
-        </div>
+        <form class="container-envio-mensagens">
+            <input type="text" id="text-input" placeholder="Digite sua pergunta" autofocus>
+            <button onclick="submitText()" id="botao-enviar">Enviar</button>
+        </form>
     </div>
 
     <script>
         var historico_chat = []
 
-        function formatarResposta(dados_resposta){            
+        function formatarResposta(dados_resposta){
             var textoResposta = 
                 dados_resposta.resposta.split('\n').map((linha) => {
                     return `<p>${linha}</p>\n`
@@ -204,16 +212,16 @@
         }
 
         async function submitText() {
-            document.getElementById('botaoEnviar').disabled = true;
-            document.getElementById('textInput').disabled = true;
-            var input = document.getElementById('textInput').value;
-            document.getElementById('textInput').value = '';
+            document.getElementById('botao-enviar').disabled = true;
+            document.getElementById('text-input').disabled = true;
+            var input = document.getElementById('text-input').value;
+            document.getElementById('text-input').value = '';
             var divPergunta = document.createElement('div');
             divPergunta.className = 'text-box';
             divPergunta.textContent = input;
             divPergunta.classList.add('align-right');
             divPergunta.classList.add('mensagem-enviada');
-            document.getElementById('displayArea').appendChild(divPergunta);
+            document.getElementById('container-envio-mensagens').appendChild(divPergunta);
 
             
             var divResposta = document.createElement('div');
@@ -221,9 +229,9 @@
             divResposta.innerHTML = "<i>Digitando Resposta<i> <span class='dot1'>.</span><span class='dot2'>.</span><span class='dot3'>.</span>";
             divResposta.classList.add('align-left');
             divResposta.classList.add('mensagem-recebida');
-            document.getElementById('displayArea').appendChild(divResposta);
+            document.getElementById('container-envio-mensagens').appendChild(divResposta);
 
-            const response = await fetch("http://127.0.0.1:8000/chat/enviar_pergunta/", {
+            const response = await fetch("http://10.90.5.66:8000/chat/enviar_pergunta/", {
                 method: "POST",
                 body: JSON.stringify({
                     pergunta: input,
@@ -270,8 +278,9 @@
                         // console.log(erro);
                     }
                     
-                    document.getElementById('botaoEnviar').removeAttribute("disabled");
-                    document.getElementById('textInput').removeAttribute("disabled");
+                    document.getElementById('botao-enviar').removeAttribute("disabled");
+                    document.getElementById('text-input').removeAttribute("disabled");
+                    document.getElementById('text-input').focus();
                 }
             }
         }

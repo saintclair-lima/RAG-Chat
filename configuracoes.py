@@ -3,7 +3,6 @@ URL_LLAMA='http://localhost:11434'
 THREADPOOL_MAX_WORKERS=10
 EMBEDDING_INSTRUCTOR="hkunlp/instructor-xl"
 EMBEDDING_SQUAD_PORTUGUESE="pierreguillou/bert-base-cased-squad-v1.1-portuguese"
-EMBEDDING_BERT_PORTUGUESE="neuralmind/bert-large-portuguese-cased"
 DEVICE='cpu' # ['cpu', cuda']
 TIPO_DE_BUSCA='mmr'  # ['mmr', 'similarity', 'similarity_score_threshold']
 NUM_DOCUMENTOS_RETORNADOS=5
