@@ -19,7 +19,7 @@
             background-color: #f0f0f0;
             font-family: Arial, sans-serif;
         }
-        .container {
+        .container-conteudo {
             width: 50%;
             min-width: 300px;
             display: flex;
@@ -31,7 +31,7 @@
             padding: 20px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        .container-mensagens {
+        .container-exibicao-mensagens {
             flex: 1;
             border: 1px solid #ccc;
             margin-bottom: 20px;
@@ -158,21 +158,22 @@
     </style>
 
     <style>
-         @keyframes dot-blink1 { 0%, 25% {opacity: 0;} 26%, 50% {opacity: 1;} 51%, 75% {opacity: 1;} 76%, 100% {opacity: 1;} }
-         @keyframes dot-blink2 { 0%, 25% {opacity: 0;} 26%, 50% {opacity: 0;} 51%, 75% {opacity: 1;} 76%, 100% {opacity: 1;} }
-         @keyframes dot-blink3 { 0%, 25% {opacity: 0;} 26%, 50% {opacity: 0;} 51%, 75% {opacity: 0;} 76%, 100% {opacity: 1;} }
-        .dot1 {animation: dot-blink1 2s infinite; font-weight: bolder; font-size: large;}
-        .dot2 {animation: dot-blink2 2s infinite; font-weight: bolder; font-size: large;}
-        .dot3 {animation: dot-blink3 2s infinite; font-weight: bolder; font-size: large;}
+        @keyframes dot-blink1 { 0%, 25% {opacity: 0;} 26%, 50% {opacity: 1;} 51%, 75% {opacity: 1;} 76%, 100% {opacity: 1;} }
+        @keyframes dot-blink2 { 0%, 25% {opacity: 0;} 26%, 50% {opacity: 0;} 51%, 75% {opacity: 1;} 76%, 100% {opacity: 1;} }
+        @keyframes dot-blink3 { 0%, 25% {opacity: 0;} 26%, 50% {opacity: 0;} 51%, 75% {opacity: 0;} 76%, 100% {opacity: 1;} }
+        .dots {font-weight: bolder; font-size: large;}
+        .dot1 {animation: dot-blink1 2s infinite;}
+        .dot2 {animation: dot-blink2 2s infinite;}
+        .dot3 {animation: dot-blink3 2s infinite;}
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="container-conteudo">
         <div class="div-cabecalho">
             <img src="/assets/img/Legisberto.png" class="img-legisberto">
             <span class="rotulo-legisberto">Legisberto</span>
         </div>
-        <div class="container-mensagens" id="container-envio-mensagens">
+        <div class="container-exibicao-mensagens" id="container-exibicao-mensagens">
             <!-- Divs das mensagens serão adicionadas aqui -->
              <div class="text-box mensagem-recebida">
                 <p>Oi! 😊</p>
@@ -185,7 +186,7 @@
                     É importante verificar os documentos normativos diretamente, em caso de dúvida.</p>
              </div>
         </div>
-        <form class="container-envio-mensagens">
+        <form class="container-envio-mensagens" id="container-envio-mensagens">
             <input type="text" id="text-input" placeholder="Digite sua pergunta" autofocus>
             <button onclick="submitText()" id="botao-enviar">Enviar</button>
         </form>
@@ -221,15 +222,17 @@
             divPergunta.textContent = input;
             divPergunta.classList.add('align-right');
             divPergunta.classList.add('mensagem-enviada');
-            document.getElementById('container-envio-mensagens').appendChild(divPergunta);
+            document.getElementById('container-exibicao-mensagens').appendChild(divPergunta);
 
             
             var divResposta = document.createElement('div');
             divResposta.className = 'text-box';
-            divResposta.innerHTML = "<i>Digitando Resposta<i> <span class='dot1'>.</span><span class='dot2'>.</span><span class='dot3'>.</span>";
+            divResposta.innerHTML = "<i>Digitando Resposta<i> <span class='dots'><span class='dot1'>.</span><span class='dot2'>.</span><span class='dot3'>.</span></span>";
             divResposta.classList.add('align-left');
             divResposta.classList.add('mensagem-recebida');
-            document.getElementById('container-envio-mensagens').appendChild(divResposta);
+            document.getElementById('container-exibicao-mensagens').appendChild(divResposta);
+            // rola a página até o início da nova mensagem
+            document.getElementById('container-exibicao-mensagens').scrollTop = document.getElementById('container-exibicao-mensagens').scrollHeight;
 
             const response = await fetch("http://10.90.5.66:8000/chat/enviar_pergunta/", {
                 method: "POST",
