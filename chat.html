@@ -212,6 +212,14 @@
             return textoResposta;
         }
 
+        function rolagemAutomatica() {
+            containerMensagens = document.getElementById('container-exibicao-mensagens');
+            const novaMensagem = containerMensagens.lastElementChild;
+            if (novaMensagem.getBoundingClientRect()['y'] + novaMensagem.getBoundingClientRect()['height'] <= containerMensagens.getBoundingClientRect()['y'] + containerMensagens.getBoundingClientRect()['height']) {
+                containerMensagens.scrollTop = containerMensagens.scrollHeight;
+            }
+        }
+
         async function submitText() {
             document.getElementById('botao-enviar').disabled = true;
             document.getElementById('text-input').disabled = true;
@@ -252,6 +260,7 @@
             let textoAcumulado = '<p>';
 
             while (true) {
+                rolagemAutomatica();
                 const { done, value } = await reader.read();
                 if (done) break;
                 const fragmento_resposta = decoder.decode(value, { stream: true });
