@@ -38,6 +38,9 @@ async def gerar_resposta(dadosRecebidos: DadosChat):
 @app.get('/chat/')
 async def pagina_chat():
     with open('chat.html', 'r', encoding='utf-8') as arquivo: conteudo_html = arquivo.read()
+    # substituindo as tags dentro do HTML, para maior controle
+    for tag, valor in configuracoes.TAGS_SUBSTITUICAO_HTML.items():
+        conteudo_html = conteudo_html.replace(tag, valor)
     return HTMLResponse(content=conteudo_html, status_code=200)
 
 @app.get('/assets/img/favicon/favicon.ico')

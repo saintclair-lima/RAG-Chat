@@ -1,5 +1,10 @@
 URL_BANCO_VETORES = 'banco_vetores_alrn_adicional' # '/content/drive/MyDrive/ALRN-Docs/Chatbot/banco_vetores_alrn_adicional'
 URL_LLAMA='http://localhost:11434'
+URL_HOST='http://10.90.5.66:8000'
+TAGS_SUBSTITUICAO_HTML={
+    'TAG_INSERCAO_URL_HOST': URL_HOST,
+    'TAG_INSERCAO_FLAG_ENCERRAMENTO_MENSAGEM':'CHEGOU_AO_FIM_DO_TEXTO_DA_RESPOSTA'
+    }
 THREADPOOL_MAX_WORKERS=10
 EMBEDDING_INSTRUCTOR="hkunlp/instructor-xl"
 EMBEDDING_SQUAD_PORTUGUESE="pierreguillou/bert-base-cased-squad-v1.1-portuguese"
