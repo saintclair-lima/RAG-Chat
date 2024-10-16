@@ -1,3 +1,5 @@
+import torch
+from transformers import BertTokenizer, BertForQuestionAnswering, pipeline
 from fastapi.responses import StreamingResponse
 from langchain_chroma import Chroma
 from langchain_ollama import ChatOllama
@@ -45,12 +47,12 @@ class GeradorDeRespostas:
             argumentos_de_busca={'score_threshold':limiar_score_similaridade, 'k':numero_de_documentos_retornados}
 
         if not funcao_de_embeddings:
-            print(f'Criando a função de embeddings com {configuracoes.MODELO_DE_EMBEDDINGS}')
+            print(f'-- Criando a função de embeddings do ChromaDB com {configuracoes.MODELO_DE_EMBEDDINGS}')
             from langchain_huggingface import HuggingFaceEmbeddings
             funcao_de_embeddings = HuggingFaceEmbeddings(
                 model_name=configuracoes.MODELO_DE_EMBEDDINGS,
                 show_progress=True,
-                model_kwargs={"device": configuracoes.DEVICE},
+                model_kwargs={"device": device},
             )
 
         
@@ -63,6 +65,12 @@ class GeradorDeRespostas:
 
         if verbose: print('--- gerando retriever (gerenciador de consultas)...')
         self.gerenciador_de_consulta = self.banco_de_vetores.as_retriever(search_type=tipo_de_busca, search_kwargs=argumentos_de_busca)
+
+        # Carregando modelo e tokenizador pre-treinados
+        # optou-se por não usar pipeline, por ser mais lento que usar o modelo diretamente
+        # self.modelo_bert_qa_pipeline = pipeline("question-answering", model=self.modelo_bert_qa, tokenizer=self.tokenizador_bert)
+        self.modelo_bert_qa = BertForQuestionAnswering.from_pretrained(configuracoes.EMBEDDING_SQUAD_PORTUGUESE)
+        self.tokenizador_bert = BertTokenizer.from_pretrained(configuracoes.EMBEDDING_SQUAD_PORTUGUESE)
 
         if verbose: print('--- gerando a interface com o LLM...')
         self.interface_llama = ChatOllama(
@@ -104,8 +112,73 @@ class GeradorDeRespostas:
         if verbose: print('--- inicialização completa!')
 
     def formatar_documentos_recuperados(self, docs):
-            '''Função de formatação dos documentos. 'docs' é uma lista de objetos do tipo langchain_core.documents.Document'''
-            return "\n\n\n\n".join([f'{doc.metadata["titulo"]}, {doc.page_content}' for doc in docs])
+        '''Função de formatação dos documentos. 'docs' é uma lista de objetos do tipo langchain_core.documents.Document'''
+        return "\n\n\n\n".join([f'{doc.metadata["titulo"]}, {doc.page_content}' for doc in docs])
+    
+    def avaliar_respostas_por_documento(self, pergunta, documento):
+        # Optou-se por não utilizar a abordagem com pipeline por ser mais lenta
+        # input = {
+        #     'question': pergunta,
+        #     'context': f'{documento.page_content}'
+        # }
+        # res = self.modelo_bert_qa_pipeline(input)
+        
+        marcador_tempo_inicio = time()
+        inputs = self.tokenizador_bert.encode_plus(
+            pergunta,
+            documento.page_content,
+            return_tensors="pt",
+            truncation=True,
+            max_length=512
+        )
+
+        with torch.no_grad():
+            outputs = self.modelo_bert_qa(**inputs)
+
+        start_logits = outputs.start_logits
+        end_logits = outputs.end_logits
+
+        start_probs = torch.softmax(start_logits, dim=-1)
+        end_probs = torch.softmax(end_logits, dim=-1)
+
+        # Melhores k posições iniciais e finais
+        k = 5
+
+        # Get the top-k most probable start and end positions along with their probabilities
+        top_k_start = torch.topk(start_probs, k, dim=-1)
+        top_k_end = torch.topk(end_probs, k, dim=-1)
+
+        # Convert token indices back to string spans with their scores
+        possible_answers_with_scores = []
+
+        # Iterate over all top-k start and end positions
+        for i in range(k):
+            for j in range(k):
+                start_idx = top_k_start.indices.squeeze()[i].item()
+                end_idx = top_k_end.indices.squeeze()[j].item()
+                # Ensure the end index comes after the start index
+                if end_idx >= start_idx:
+                    # Decode the answer from tokens
+                    answer_tokens = inputs['input_ids'][0][start_idx:end_idx + 1]
+                    answer = self.tokenizador_bert.decode(answer_tokens, skip_special_tokens=True)
+                    
+                    # Calculate the score as the product of the start and end probabilities (logits can also be used)
+                    score = start_probs[0, start_idx].item() * end_probs[0, end_idx].item()
+
+                    # Store the answer along with its score
+                    possible_answers_with_scores.append((answer, score))
+
+        # Sort the answers by score (optional, to see the best answers first)
+        possible_answers_with_scores = sorted(possible_answers_with_scores, key=lambda x: x[1], reverse=True)
+        marcador_tempo_fim = time()
+        tempo_decorrido = marcador_tempo_fim - marcador_tempo_inicio
+
+        return {
+            'score': possible_answers_with_scores[0][1],
+            'possiveis_respostas': possible_answers_with_scores,
+            'tempo_decorrido': tempo_decorrido,
+        }
+
     
     async def async_stream_wrapper(self, sync_generator):
         """Run the synchronous generator in an executor to yield its items as they become available."""
@@ -134,97 +207,29 @@ class GeradorDeRespostas:
         marcador_tempo_inicio = time()
         # documentos_retornados = self.gerenciador_de_consulta.invoke(pergunta)
         documentos_retornados = await asyncio.to_thread(self.gerenciador_de_consulta.invoke, pergunta)
-
-
-
-        # PARTE EXPERIMENTAL
-
-        # def get_top_answers(possible_starts,possible_ends,input_ids):
-        #     answers = []
-        #     for start,end in zip(possible_starts,possible_ends):
-        #         #+1 for end
-        #         answer = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(input_ids[start:end+1]))
-        #         answers.append( answer )
-        #     return answers
-
-        # def answer_question(question_inputs, context_inputs, topN=10):
-
-        #     # Combine the question and context tokens
-        #     input_ids = torch.cat([question_inputs, context_inputs[:, 1:]], dim=1)
-
-        #     # Create the attention mask by combining both masks
-        #     attention_mask = torch.cat([question_inputs["attention_mask"], context_inputs["attention_mask"][:, 1:]], dim=1)
-
-        #     inputs = {
-        #         "input_ids": input_ids,
-        #         "attention_mask": attention_mask,
-        #     }
-
-        #     text_tokens = tokenizer.convert_ids_to_tokens(input_ids.tolist()[0])
-        #     # create the embeddings
-        #     model_out = model(**inputs)
-
-        #     answer_start_scores = model_out["start_logits"]
-        #     answer_end_scores = model_out["end_logits"]
-
-        #     possible_starts = np.argsort(answer_start_scores.cpu().detach().numpy()).flatten()[::-1][:topN] #Coloca somente a primeira resposta?
-        #     possible_ends = np.argsort(answer_end_scores.cpu().detach().numpy()).flatten()[::-1][:topN]     #Coloca somente a primeira resposta?
-
-        #     # Get best answer
-        #     answer_start = torch.argmax(answer_start_scores)
-        #     answer_end = torch.argmax(answer_end_scores) + 1  # Get the most likely end of answer with the argmax of the score
-
-        #     answer = tokenizer.convert_tokens_to_string(tokenizer.convert_ids_to_tokens(input_ids[0][answer_start:answer_end]))
-        #     answers = get_top_answers(possible_starts, possible_ends, input_ids[0].tolist())
-
-        #     return {
-        #         "answer": answer,
-        #         "answer_start": answer_start,
-        #         "answer_end": answer_end,
-        #         "input_ids": input_ids.tolist()[0],
-        #         "answer_start_scores": answer_start_scores,
-        #         "answer_end_scores": answer_end_scores,
-        #         "inputs": inputs,
-        #         "answers": answers,
-        #         "possible_starts": possible_starts,
-        #         "possible_ends": possible_ends
-        #     }
-
-        # nome_modelo = 'pierreguillou/bert-base-cased-squad-v1.1-portuguese'
-
-        # from transformers import pipeline
-        # from transformers import AutoTokenizer, AutoModelForQuestionAnswering, BertModel, BertTokenizer
-        # import torch
-        # import numpy as np
-        # import torch.nn.functional as F
-
-        # tokenizer = AutoTokenizer.from_pretrained(nome_modelo)
-        # model = AutoModelForQuestionAnswering.from_pretrained(nome_modelo, gradient_checkpointing=True)
-
-        # lista_inputs_contexto = [tokenizer.encode_plus('', documento.page_content, add_special_tokens=True, return_tensors="pt") for documento in documentos_retornados]
-        # # ic = tokenizer.encode_plus('', documentos_retornados[0].page_content, add_special_tokens=True, return_tensors="pt")
-        # # print(ic)
-        # lista_embeddings_contexto = [model(**inputs) for inputs in lista_inputs_contexto]
-
-        # inputs_pergunta = tokenizer.encode_plus(pergunta, '', add_special_tokens=True, return_tensors="pt")
-        # embedidngs_pergunta = model(**inputs_pergunta)
-
-
-
-        # for emb_contexto in lista_embeddings_contexto:
-        #     print(f'================================')
-        #     print(answer_question(embedidngs_pergunta, emb_contexto))
-        #     print(f'\n--------------------------------\n')
-
-        ## FIM DA PARTE EXPERIMENTAL
-
-
-
         marcador_tempo_fim = time()
         tempo_consulta = marcador_tempo_fim - marcador_tempo_inicio
         if verbose: print(f'--- consulta no banco concluída ({tempo_consulta} segundos)')
+
+
+        # PARTE EXPERIMENTAL
+        scores = []
+        for documento in documentos_retornados:
+            avaliacao_respostas = self.avaliar_respostas_por_documento(pergunta, documento)
+            scores.append(avaliacao_respostas['score'])
+
+        # normalizando os scores
+        scores = [(score-min(scores)) /(max(scores) - min(scores)) for score in scores]
+
+        documentos_com_score = zip(documentos_retornados, scores)
+        documentos_com_score = sorted(documentos_com_score, key=lambda x: x[1], reverse=True)
+        for item in documentos_com_score:
+            print(item[1], item[0].metadata['titulo'] + item[0].metadata['subtitulo'])
+        documentos_selecionados = [documento[0] for documento in documentos_com_score if documento[1] >= 0.2]
+        ## FIM DA PARTE EXPERIMENTAL
+
         # contexto = self.formatar_documentos_recuperados(documentos_retornados)
-        contexto = await asyncio.to_thread(self.formatar_documentos_recuperados, documentos_retornados)
+        contexto = await asyncio.to_thread(self.formatar_documentos_recuperados, documentos_selecionados)
         prompt_llama = self.template_do_prompt.invoke({"pergunta": pergunta, "contexto": contexto, 'historico_chat': historico_chat})
         
         if verbose: print(f'--- gerando resposta com o Llama')
@@ -249,7 +254,7 @@ class GeradorDeRespostas:
         yield json.dumps(
             {
                 "pergunta": pergunta,
-                "documentos": [item.model_dump_json() for item in documentos_retornados],
+                "documentos": [item.model_dump_json() for item in documentos_selecionados],
                 "contexto": prompt_llama.messages[1].content,
                 "resposta_llama": resposta_llama.model_dump_json(),
                 "resposta": resposta_formatada.replace('\n\n', '\n'),
