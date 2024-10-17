@@ -1,5 +1,5 @@
 URL_BANCO_VETORES = 'banco_vetores_alrn_adicional' # '/content/drive/MyDrive/ALRN-Docs/Chatbot/banco_vetores_alrn_adicional'
-URL_LLAMA='http://localhost:11434'
+URL_LLAMA='http://ollama:11434'
 URL_HOST='http://10.90.5.66:8000'
 TAGS_SUBSTITUICAO_HTML={
     'TAG_INSERCAO_URL_HOST': URL_HOST,
