@@ -21,7 +21,8 @@ print(f'Criando a função de embeddings com {configuracoes.MODELO_DE_EMBEDDINGS
 funcao_de_embeddings = HuggingFaceEmbeddings(
     model_name=configuracoes.MODELO_DE_EMBEDDINGS,
     show_progress=True,
-    model_kwargs={'device': configuracoes.DEVICE}
+    model_kwargs={'device': configuracoes.DEVICE},
+    cache_folder='modelos_ia'
 )
 
 gerador_de_respostas = GeradorDeRespostas(funcao_de_embeddings=funcao_de_embeddings, url_banco_vetores=configuracoes.URL_BANCO_VETORES)

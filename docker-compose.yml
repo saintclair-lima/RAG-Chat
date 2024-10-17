@@ -1,0 +1,20 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/var/www
+      - modelos_ia:/var/www/modelos_ia
+    depends_on:
+      - ollama
+  ollama:
+    image: ollama/ollama:0.3.11
+    volumes:
+      - ollama:/root/.ollama
+    ports:
+      - "11434:11434"
+
+volumes:
+  ollama:
+  modelos_ia:
