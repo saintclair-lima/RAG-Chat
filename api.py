@@ -1,11 +1,12 @@
 print('Inicializando a estrutura da API...\nImportando as bibliotecas...')
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
+from sentence_transformers import SentenceTransformer
 from starlette.middleware.cors import CORSMiddleware
-from langchain_huggingface import HuggingFaceEmbeddings
-from gerador_de_respostas import GeradorDeRespostas, DadosChat
 
 import environment
+from gerador_de_respostas import GeradorDeRespostas, DadosChat
+from utils import FuncaoEmbeddings
 
 print('Instanciando a api (FastAPI)')
 app = FastAPI()
@@ -18,14 +19,9 @@ app.add_middleware(
 )
 
 print(f'Criando a função de embeddings com {environment.MODELO_DE_EMBEDDINGS}')
-funcao_de_embeddings = HuggingFaceEmbeddings(
-    model_name=environment.MODELO_DE_EMBEDDINGS,
-    show_progress=True,
-    model_kwargs={'device': environment.DEVICE}
-)
+funcao_de_embeddings = FuncaoEmbeddings(model_name=environment.MODELO_DE_EMBEDDINGS, biblioteca=SentenceTransformer)
 
-# gerador_de_respostas = GeradorDeRespostas(funcao_de_embeddings=funcao_de_embeddings, url_banco_vetores=environment.URL_BANCO_VETORES)
-gerador_de_respostas = GeradorDeRespostas(funcao_de_embeddings=None, url_banco_vetores=environment.URL_BANCO_VETORES + '_teste')
+gerador_de_respostas = GeradorDeRespostas(funcao_de_embeddings=funcao_de_embeddings, url_banco_vetores=environment.URL_BANCO_VETORES)
 
 print('Definindo as rotas')
 
