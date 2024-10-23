@@ -3,9 +3,9 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 from starlette.middleware.cors import CORSMiddleware
 from langchain_huggingface import HuggingFaceEmbeddings
-from gerador_de_respostas import GeradorDeRespostas, DadosChat
+from gerador_de_respostas_refatorado import GeradorDeRespostas, DadosChat
 
-import configuracoes
+import environment
 
 print('Instanciando a api (FastAPI)')
 app = FastAPI()
@@ -17,14 +17,15 @@ app.add_middleware(
     allow_headers=['*'],  # Allow all headers
 )
 
-print(f'Criando a função de embeddings com {configuracoes.MODELO_DE_EMBEDDINGS}')
+print(f'Criando a função de embeddings com {environment.MODELO_DE_EMBEDDINGS}')
 funcao_de_embeddings = HuggingFaceEmbeddings(
-    model_name=configuracoes.MODELO_DE_EMBEDDINGS,
+    model_name=environment.MODELO_DE_EMBEDDINGS,
     show_progress=True,
-    model_kwargs={'device': configuracoes.DEVICE}
+    model_kwargs={'device': environment.DEVICE}
 )
 
-gerador_de_respostas = GeradorDeRespostas(funcao_de_embeddings=funcao_de_embeddings, url_banco_vetores=configuracoes.URL_BANCO_VETORES)
+# gerador_de_respostas = GeradorDeRespostas(funcao_de_embeddings=funcao_de_embeddings, url_banco_vetores=environment.URL_BANCO_VETORES)
+gerador_de_respostas = GeradorDeRespostas(funcao_de_embeddings=None, url_banco_vetores=environment.URL_BANCO_VETORES + '_teste')
 
 print('Definindo as rotas')
 
@@ -39,7 +40,7 @@ async def gerar_resposta(dadosRecebidos: DadosChat):
 async def pagina_chat():
     with open('chat.html', 'r', encoding='utf-8') as arquivo: conteudo_html = arquivo.read()
     # substituindo as tags dentro do HTML, para maior controle
-    for tag, valor in configuracoes.TAGS_SUBSTITUICAO_HTML.items():
+    for tag, valor in environment.TAGS_SUBSTITUICAO_HTML.items():
         conteudo_html = conteudo_html.replace(tag, valor)
     return HTMLResponse(content=conteudo_html, status_code=200)
 
