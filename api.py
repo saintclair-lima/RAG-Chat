@@ -3,7 +3,7 @@ from fastapi import FastAPI
 from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 from starlette.middleware.cors import CORSMiddleware
 from langchain_huggingface import HuggingFaceEmbeddings
-from gerador_de_respostas_refatorado import GeradorDeRespostas, DadosChat
+from gerador_de_respostas import GeradorDeRespostas, DadosChat
 
 import environment
 
