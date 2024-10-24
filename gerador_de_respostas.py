@@ -1,5 +1,5 @@
 import torch
-from numpy import argmax, average, mean, median
+from numpy import argmax, mean
 from transformers import BertTokenizer, BertForQuestionAnswering
 import json
 import asyncio
@@ -41,7 +41,7 @@ class GeradorDeRespostas:
     
     def formatar_lista_documentos(self, documentos: dict):
         return [{'id': documentos['ids'][0][idx],
-                 'distancia': documentos['distances'][0][idx],
+                 'score_distancia': 2 - documentos['distances'][0][idx], # Distância do cosseno vaia entre 2 e 0
                  'metadados': documentos['metadatas'][0][idx],
                  'conteudo': documentos['documents'][0][idx]} for idx in range(len(documentos['ids'][0]))]
 
@@ -71,16 +71,18 @@ class GeradorDeRespostas:
 
         # AFAZER: Avaliar se score ponderado faz sentido
         logits_inicio = outputs.start_logits.numpy()
-        media_logits_inicio_positivos = average([logit for logit in logits_inicio[0] if logit > 0])
+        logits_inicio_positivos = [logit for logit in logits_inicio[0] if logit > 0]
+        media_logits_inicio_positivos = mean(logits_inicio_positivos) if logits_inicio_positivos else 0
         indice_melhor_logit_inicio = argmax(logits_inicio[0])
         melhor_logit_inicio = logits_inicio[0][indice_melhor_logit_inicio]
 
         logits_fim = outputs.end_logits.numpy()
-        media_logits_fim_positivos = average([logit for logit in logits_fim[0] if logit > 0])
+        logits_fim_positivos = [logit for logit in logits_fim[0] if logit > 0]
+        media_logits_fim_positivos = mean(logits_fim_positivos) if logits_fim_positivos else 0
         indice_melhor_logit_fim = argmax(logits_fim[0])
         melhor_logit_fim = logits_fim[0][indice_melhor_logit_fim]
 
-        media_logits_positivos = average([media_logits_inicio_positivos, media_logits_fim_positivos])
+        media_logits_positivos = mean([media_logits_inicio_positivos, media_logits_fim_positivos])
 
         score = melhor_logit_inicio + melhor_logit_fim
         score_ponderado = score * media_logits_positivos
@@ -161,5 +163,6 @@ class GeradorDeRespostas:
             },
             ensure_ascii=False
         )
+        print('Concluído')
 
     
