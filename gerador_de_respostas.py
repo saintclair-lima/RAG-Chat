@@ -1,4 +1,5 @@
 import torch
+from numpy import argmax, average, mean, median
 from transformers import BertTokenizer, BertForQuestionAnswering
 import json
 import asyncio
@@ -7,6 +8,7 @@ from time import time
 
 from utils import InterfaceChroma, InterfaceOllama, DadosChat
 import environment
+from typing import Callable, Generator
     
 
 class GeradorDeRespostas:
@@ -15,26 +17,26 @@ class GeradorDeRespostas:
     gera uma texto de resposta que condensa as informações resultantes da consulta.
     '''
     def __init__(self,
-                url_banco_vetores=environment.URL_BANCO_VETORES,
-                colecao_de_documentos=environment.COLECAO_DE_DOCUMENTOS,
-                funcao_de_embeddings=None,
-                verboso=True):
+                url_banco_vetores:str=environment.URL_BANCO_VETORES,
+                colecao_de_documentos:str=environment.NOME_COLECAO_DE_DOCUMENTOS,
+                funcao_de_embeddings:Callable=None,
+                fazer_log:bool=True):
         self.executor = ThreadPoolExecutor(max_workers=environment.THREADPOOL_MAX_WORKERS)
         
-        if verboso: print('-- Gerador de respostas em inicialização...')
+        if fazer_log: print('-- Gerador de respostas em inicialização...')
 
-        self.interface_chromadb = InterfaceChroma(url_banco_vetores, colecao_de_documentos, funcao_de_embeddings, verboso)
+        self.interface_chromadb = InterfaceChroma(url_banco_vetores, colecao_de_documentos, funcao_de_embeddings, fazer_log)
 
         # Carregando modelo e tokenizador pre-treinados
         # optou-se por não usar pipeline, por ser mais lento que usar o modelo diretamente
         # self.modelo_bert_qa_pipeline = pipeline("question-answering", model=self.modelo_bert_qa, tokenizer=self.tokenizador_bert)
-        if verboso: print('--- preparando modelo e tokenizador do Bert...')
+        if fazer_log: print('--- preparando modelo e tokenizador do Bert...')
         self.modelo_bert_qa = BertForQuestionAnswering.from_pretrained(environment.EMBEDDING_SQUAD_PORTUGUESE)
         self.tokenizador_bert = BertTokenizer.from_pretrained(environment.EMBEDDING_SQUAD_PORTUGUESE)
 
         self.interface_ollama = InterfaceOllama(url_llama=environment.URL_LLAMA, nome_modelo=environment.MODELO_LLAMA)
 
-    def consultar_documentos_banco_vetores(self, pergunta: str, num_resultados=5):
+    def consultar_documentos_banco_vetores(self, pergunta: str, num_resultados:int=environment.NUM_DOCUMENTOS_RETORNADOS):
         return self.interface_chromadb.consultar_documentos(pergunta, num_resultados)
     
     def formatar_lista_documentos(self, documentos: dict):
@@ -43,12 +45,12 @@ class GeradorDeRespostas:
                  'metadados': documentos['metadatas'][0][idx],
                  'conteudo': documentos['documents'][0][idx]} for idx in range(len(documentos['ids'][0]))]
 
-    async def async_stream_wrapper(self, sync_generator):
+    async def async_stream_wrapper(self, sync_generator: Generator):
         loop = asyncio.get_running_loop()
         for item in sync_generator:
             yield await loop.run_in_executor(self.executor, lambda x=item: x)
 
-    def avaliar_respostas_por_documento(self, pergunta, texto_documento):
+    def estimar_resposta(self, pergunta, texto_documento: str):
         # Optou-se por não utilizar a abordagem com pipeline por ser mais lenta
         # input = {
         #     'question': pergunta,
@@ -67,50 +69,37 @@ class GeradorDeRespostas:
         with torch.no_grad():
             outputs = self.modelo_bert_qa(**inputs)
 
-        logits_inicio = outputs.start_logits
-        logits_fim = outputs.end_logits
+        # AFAZER: Avaliar se score ponderado faz sentido
+        logits_inicio = outputs.start_logits.numpy()
+        media_logits_inicio_positivos = average([logit for logit in logits_inicio[0] if logit > 0])
+        indice_melhor_logit_inicio = argmax(logits_inicio[0])
+        melhor_logit_inicio = logits_inicio[0][indice_melhor_logit_inicio]
 
-        probabs_inicio = torch.softmax(logits_inicio, dim=-1)
-        probabs_fim = torch.softmax(logits_fim, dim=-1)
+        logits_fim = outputs.end_logits.numpy()
+        media_logits_fim_positivos = average([logit for logit in logits_fim[0] if logit > 0])
+        indice_melhor_logit_fim = argmax(logits_fim[0])
+        melhor_logit_fim = logits_fim[0][indice_melhor_logit_fim]
 
-        # Melhores k posições iniciais e finais
-        k = 5
+        media_logits_positivos = average([media_logits_inicio_positivos, media_logits_fim_positivos])
 
-        # As k posições iniciais e finais mais prováveis, junto com suas probabilidades
-        top_k_inicio = torch.topk(probabs_inicio, k, dim=-1)
-        top_k_fim = torch.topk(probabs_fim, k, dim=-1)
+        score = melhor_logit_inicio + melhor_logit_fim
+        score_ponderado = score * media_logits_positivos
 
-        # Conversão dos índices dos tokens para string, junto com seus scores
-        respostas_possiveis_com_score = []
-
-        # Para cada posição inicial e final
-        for i in range(k):
-            for j in range(k):
-                idx_inicio = top_k_inicio.indices.squeeze()[i].item()
-                idx_fim = top_k_fim.indices.squeeze()[j].item()
-                # verifica se a posição final é maior que a inicial
-                if idx_fim >= idx_inicio:
-                    # recupera os strings dos tokens
-                    tokens_resposta = inputs['input_ids'][0][idx_inicio:idx_fim + 1]
-                    resposta = self.tokenizador_bert.decode(tokens_resposta, skip_special_tokens=True)
-                    
-                    # Calcula o score como o produto das probabilidades finais e iniciais (ou dos logits)
-                    score = probabs_inicio[0, idx_inicio].item() * probabs_fim[0, idx_fim].item()
-                    respostas_possiveis_com_score.append((resposta, score))
-
-        # Ordena pelo score
-        respostas_possiveis_com_score = sorted(respostas_possiveis_com_score, key=lambda x: x[1], reverse=True)
+        tokens_resposta = inputs['input_ids'][0][indice_melhor_logit_inicio:indice_melhor_logit_fim + 1]
+        resposta = self.tokenizador_bert.decode(tokens_resposta, skip_special_tokens=True)
 
         return {
-            'score': respostas_possiveis_com_score[0][1],
-            'possiveis_respostas': respostas_possiveis_com_score
+            'score': float(score),
+            'score_ponderado': float(score_ponderado),
+            'logits': [float(melhor_logit_inicio), float(melhor_logit_fim)],
+            'resposta': resposta
         }
 
-    async def consultar(self, dados_chat: DadosChat, verbose=True):
+    async def consultar(self, dados_chat: DadosChat, fazer_log:bool=True):
         contexto = dados_chat.contexto
         pergunta = dados_chat.pergunta
 
-        if verbose: print(f'Gerador de respostas: realizando consulta para "{pergunta}"...')
+        if fazer_log: print(f'Gerador de respostas: realizando consulta para "{pergunta}"...')
 
         # Recuperando documentos usando o ChromaDB
         marcador_tempo_inicio = time()
@@ -118,21 +107,23 @@ class GeradorDeRespostas:
         lista_documentos = self.formatar_lista_documentos(documentos)
         marcador_tempo_fim = time()
         tempo_consulta = marcador_tempo_fim - marcador_tempo_inicio
-        if verbose: print(f'--- consulta no banco concluída ({tempo_consulta} segundos)')
+        if fazer_log: print(f'--- consulta no banco concluída ({tempo_consulta} segundos)')
 
         # Atribuindo scores usando Bert
-        if verbose: print(f'--- aplicando scores do Bert aos documentos recuperados...')
+        if fazer_log: print(f'--- aplicando scores do Bert aos documentos recuperados...')
         marcador_tempo_inicio = time()
         for documento in lista_documentos:
-            avaliacao_respostas = self.avaliar_respostas_por_documento(pergunta, documento['conteudo'])
-            documento['score_bert'] = avaliacao_respostas['score']
-            documento['possiveis_respostas'] = avaliacao_respostas['possiveis_respostas']
+            resposta_estimada = self.estimar_resposta(pergunta, documento['conteudo'])
+            documento['score_bert'] = resposta_estimada['score']
+            # documento['score_ponderado'] = resposta_estimada['score_ponderado']
+            documento['logits'] = resposta_estimada['logits']
+            documento['resposta_bert'] = resposta_estimada['resposta']
         marcador_tempo_fim = time()
         tempo_bert = marcador_tempo_fim - marcador_tempo_inicio
-        if verbose: print(f'--- scores atribuídos ({tempo_bert} segundos)')
+        if fazer_log: print(f'--- scores atribuídos ({tempo_bert} segundos)')
         
         # Gerando resposta utilizando o Llama
-        if verbose: print(f'--- gerando resposta com o Llama')
+        if fazer_log: print(f'--- gerando resposta com o Llama')
         marcador_tempo_inicio = time()
         texto_resposta_llama = ''
         flag_tempo_resposta = False     
@@ -147,12 +138,12 @@ class GeradorDeRespostas:
             if not flag_tempo_resposta:
                 flag_tempo_resposta = True
                 tempo_inicio_resposta = time() - marcador_tempo_inicio
-                if verbose: print(f'----- iniciou retorno da resposta ({tempo_inicio_resposta} segundos)')
+                if fazer_log: print(f'----- iniciou retorno da resposta ({tempo_inicio_resposta} segundos)')
 
         item['response'] = texto_resposta_llama
         marcador_tempo_fim = time()
         tempo_llama = marcador_tempo_fim - marcador_tempo_inicio
-        if verbose: print(f'--- resposta do Llama concluída ({tempo_llama} segundos)')
+        if fazer_log: print(f'--- resposta do Llama concluída ({tempo_llama} segundos)')
 
         yield "CHEGOU_AO_FIM_DO_TEXTO_DA_RESPOSTA"
 
