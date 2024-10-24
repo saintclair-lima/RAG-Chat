@@ -27,8 +27,6 @@ print('Definindo as rotas')
 
 @app.post('/chat/enviar_pergunta/')
 async def gerar_resposta(dadosRecebidos: DadosChat):
-    # dados_resposta = await gerador_de_respostas.gerar_resposta(dadosRecebidos)
-    # return {'dados_resposta': dados_resposta}
     return StreamingResponse(gerador_de_respostas.consultar(dadosRecebidos), media_type='text/plain')
 
 

@@ -83,20 +83,20 @@ class InterfaceOllama:
 class InterfaceChroma:
     def __init__(self,
                  url_banco_vetores=environment.URL_BANCO_VETORES,
-                 colecao_de_documentos=environment.COLECAO_DE_DOCUMENTOS,
+                 colecao_de_documentos=environment.NOME_COLECAO_DE_DOCUMENTOS,
                  funcao_de_embeddings=None,
-                 verboso=True):
+                 fazer_log=True):
     
-        if verboso: print('--- interface do ChromaDB em inicialização')
+        if fazer_log: print('--- interface do ChromaDB em inicialização')
 
         if not funcao_de_embeddings:
             print(f'--- criando a função de embeddings do ChromaDB com {environment.MODELO_DE_EMBEDDINGS}...')
             funcao_de_embeddings = FuncaoEmbeddings(model_name=environment.MODELO_DE_EMBEDDINGS, biblioteca=SentenceTransformer)
         
-        if verboso: print('--- inicializando banco de vetores...')
+        if fazer_log: print('--- inicializando banco de vetores...')
         self.banco_de_vetores = chromadb.PersistentClient(path=url_banco_vetores)
 
-        if verboso: print(f'--- definindo a coleção a ser usada ({colecao_de_documentos})...')
+        if fazer_log: print(f'--- definindo a coleção a ser usada ({colecao_de_documentos})...')
         self.colecao_documentos = self.banco_de_vetores.get_collection(name=colecao_de_documentos, embedding_function=funcao_de_embeddings)
     
     def consultar_documentos(self, termos_de_consulta: str, num_resultados=5):
