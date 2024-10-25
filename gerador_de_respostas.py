@@ -81,8 +81,9 @@ class GeradorDeRespostas:
 
         media_logits_positivos = mean([media_logits_inicio_positivos, media_logits_fim_positivos])
 
+        # scores em formato float para serialização com JSON
         score = float(melhor_logit_inicio + melhor_logit_fim)
-        score_ponderado = score * media_logits_positivos        
+        score_ponderado = float(score * media_logits_positivos)
         score_estimado = float(torch.max(torch.softmax(outputs.start_logits, dim=-1))*torch.max(torch.softmax(outputs.end_logits, dim=-1)))
 
         # score: soma do melhor Logit inicial com o melhor logit final
