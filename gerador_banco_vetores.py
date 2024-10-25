@@ -1,6 +1,5 @@
 from sentence_transformers import SentenceTransformer
-from chromadb import Documents, EmbeddingFunction, Embeddings, Settings
-import chromadb
+from chromadb import Documents, EmbeddingFunction, Embeddings, Settings, chromadb
 import environment
 
 class FuncaoEmbeddings(EmbeddingFunction):
@@ -77,7 +76,7 @@ for k, v in environment.DOCUMENTOS.items():
 
 # Utilizando o ChromaDb diretamente
 persist_directory = environment.URL_BANCO_VETORES
-client = chromadb.chromadb.PersistentClient(path=persist_directory)
+client = chromadb.PersistentClient(path=persist_directory)
 funcao_de_embeddings_sentence_tranformer = FuncaoEmbeddings(SentenceTransformer, model_name=environment.EMBEDDING_INSTRUCTOR)
 collection = client.create_collection(name='legisberto', embedding_function=funcao_de_embeddings_sentence_tranformer, metadata={'hnsw:space': 'cosine'})
 
