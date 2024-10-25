@@ -1,5 +1,4 @@
 import os
-import ast
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -17,10 +16,7 @@ EMBEDDING_INSTRUCTOR=os.getenv('EMBEDDING_INSTRUCTOR')
 EMBEDDING_SQUAD_PORTUGUESE=os.getenv('EMBEDDING_SQUAD_PORTUGUESE')
 MODELO_LLAMA=os.getenv('MODELO_LLAMA')
 DEVICE=os.getenv('DEVICE') # ['cpu', cuda']
-TIPO_DE_BUSCA=os.getenv('TIPO_DE_BUSCA') # ['mmr', 'similarity', 'similarity_score_threshold']
 NUM_DOCUMENTOS_RETORNADOS=int(os.getenv('NUM_DOCUMENTOS_RETORNADOS'))
-LIMIAR_SCORE_SIMILARIDADE=float(os.getenv('LIMIAR_SCORE_SIMILARIDADE'))
-LIMIAR_SCORE_DOCUMENTOS_RECUPERADOS = float(os.getenv('LIMIAR_SCORE_DOCUMENTOS_RECUPERADOS'))
 
 MODELO_DE_EMBEDDINGS = EMBEDDING_INSTRUCTOR
 
