@@ -307,6 +307,11 @@
                 if (recebeuFlagFimMensagem) {
                     try {
                         var dados_resposta = JSON.parse(textoAcumulado.split("TAG_INSERCAO_FLAG_ENCERRAMENTO_MENSAGEM")[1]);
+                        // AFAZER: Considerar se realmente mantém ordenação por score_ponderado
+                        dados_resposta.documentos = dados_resposta.documentos
+                            .filter(doc => doc.score_ponderado > 0)
+                            .sort((a, b) => b.score_ponderado - a.score_ponderado);
+
                         divResposta.innerHTML = formatarResposta(dados_resposta);
                         contexto = dados_resposta.resposta_llama.context;
                         console.log(dados_resposta)
