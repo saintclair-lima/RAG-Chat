@@ -1,6 +1,6 @@
 import torch
 from numpy import argmax, mean
-from transformers import BertTokenizer, BertForQuestionAnswering
+from transformers import BertTokenizer, BertForQuestionAnswering, pipeline
 import json
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
@@ -29,10 +29,11 @@ class GeradorDeRespostas:
 
         # Carregando modelo e tokenizador pre-treinados
         # optou-se por não usar pipeline, por ser mais lento que usar o modelo diretamente
-        # self.modelo_bert_qa_pipeline = pipeline("question-answering", model=self.modelo_bert_qa, tokenizer=self.tokenizador_bert)
         if fazer_log: print('--- preparando modelo e tokenizador do Bert...')
         self.modelo_bert_qa = BertForQuestionAnswering.from_pretrained(environment.EMBEDDING_SQUAD_PORTUGUESE)
         self.tokenizador_bert = BertTokenizer.from_pretrained(environment.EMBEDDING_SQUAD_PORTUGUESE)
+        
+        self.modelo_bert_qa_pipeline = pipeline("question-answering", environment.EMBEDDING_SQUAD_PORTUGUESE)
 
         self.interface_ollama = InterfaceOllama(url_llama=environment.URL_LLAMA, nome_modelo=environment.MODELO_LLAMA)
 
@@ -52,11 +53,7 @@ class GeradorDeRespostas:
 
     def estimar_resposta(self, pergunta, texto_documento: str):
         # Optou-se por não utilizar a abordagem com pipeline por ser mais lenta
-        # input = {
-        #     'question': pergunta,
-        #     'context': f'{documento.page_content}'
-        # }
-        # res = self.modelo_bert_qa_pipeline(input)
+        res = self.modelo_bert_qa_pipeline(question=pergunta, context=texto_documento)
         
         inputs = self.tokenizador_bert.encode_plus(
             pergunta,
@@ -84,17 +81,23 @@ class GeradorDeRespostas:
 
         media_logits_positivos = mean([media_logits_inicio_positivos, media_logits_fim_positivos])
 
-        score = melhor_logit_inicio + melhor_logit_fim
-        score_ponderado = score * media_logits_positivos
+        score = float(melhor_logit_inicio + melhor_logit_fim)
+        score_ponderado = score * media_logits_positivos        
+        score_estimado = float(torch.max(torch.softmax(outputs.start_logits, dim=-1))*torch.max(torch.softmax(outputs.end_logits, dim=-1)))
+
+        # score: soma do melhor Logit inicial com o melhor logit final
+        # score_estimado: multiplicação do softmax dos logits de inicio pelo dos logits de fim
+        # -- (manter somente se a performance do score do Bert pelo pipeline ficar lenta)
+        # score_ponderado: score ponderado pela média dos logits de inicio e fim, só quando positivos 
+        # -- (quanto mais logits positivos, mais o documento tem melhor avaliação)
 
         tokens_resposta = inputs['input_ids'][0][indice_melhor_logit_inicio:indice_melhor_logit_fim + 1]
         resposta = self.tokenizador_bert.decode(tokens_resposta, skip_special_tokens=True)
-
+        
         return {
-            'score': float(score),
-            'score_ponderado': float(score_ponderado),
-            'logits': [float(melhor_logit_inicio), float(melhor_logit_fim)],
-            'resposta': resposta
+            'resposta': (resposta, res['answer']),
+            'score': (score, res['score'], score_estimado),
+            'score_ponderado': score_ponderado
         }
 
     async def consultar(self, dados_chat: DadosChat, fazer_log:bool=True):
@@ -117,8 +120,7 @@ class GeradorDeRespostas:
         for documento in lista_documentos:
             resposta_estimada = self.estimar_resposta(pergunta, documento['conteudo'])
             documento['score_bert'] = resposta_estimada['score']
-            # documento['score_ponderado'] = resposta_estimada['score_ponderado']
-            documento['logits'] = resposta_estimada['logits']
+            documento['score_ponderado'] = resposta_estimada['score_ponderado']
             documento['resposta_bert'] = resposta_estimada['resposta']
         marcador_tempo_fim = time()
         tempo_bert = marcador_tempo_fim - marcador_tempo_inicio
