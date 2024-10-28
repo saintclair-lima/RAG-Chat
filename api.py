@@ -1,11 +1,12 @@
 print('Inicializando a estrutura da API...\nImportando as bibliotecas...')
 from fastapi import FastAPI
 from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
+from sentence_transformers import SentenceTransformer
 from starlette.middleware.cors import CORSMiddleware
-from langchain_huggingface import HuggingFaceEmbeddings
-from gerador_de_respostas import GeradorDeRespostas, DadosChat
 
-import configuracoes
+import environment
+from gerador_de_respostas import GeradorDeRespostas, DadosChat
+from utils import FuncaoEmbeddings
 
 print('Instanciando a api (FastAPI)')
 app = FastAPI()
@@ -17,22 +18,15 @@ app.add_middleware(
     allow_headers=['*'],  # Allow all headers
 )
 
-print(f'Criando a função de embeddings com {configuracoes.MODELO_DE_EMBEDDINGS}')
-funcao_de_embeddings = HuggingFaceEmbeddings(
-    model_name=configuracoes.MODELO_DE_EMBEDDINGS,
-    show_progress=True,
-    model_kwargs={'device': configuracoes.DEVICE},
-    cache_folder='modelos_ia'
-)
+print(f'Criando a função de embeddings com {environment.MODELO_DE_EMBEDDINGS}')
+funcao_de_embeddings = FuncaoEmbeddings(model_name=environment.MODELO_DE_EMBEDDINGS, biblioteca=SentenceTransformer)
 
-gerador_de_respostas = GeradorDeRespostas(funcao_de_embeddings=funcao_de_embeddings, url_banco_vetores=configuracoes.URL_BANCO_VETORES)
+gerador_de_respostas = GeradorDeRespostas(funcao_de_embeddings=funcao_de_embeddings, url_banco_vetores=environment.URL_BANCO_VETORES)
 
 print('Definindo as rotas')
 
 @app.post('/chat/enviar_pergunta/')
 async def gerar_resposta(dadosRecebidos: DadosChat):
-    # dados_resposta = await gerador_de_respostas.gerar_resposta(dadosRecebidos)
-    # return {'dados_resposta': dados_resposta}
     return StreamingResponse(gerador_de_respostas.consultar(dadosRecebidos), media_type='text/plain')
 
 
@@ -40,7 +34,7 @@ async def gerar_resposta(dadosRecebidos: DadosChat):
 async def pagina_chat():
     with open('chat.html', 'r', encoding='utf-8') as arquivo: conteudo_html = arquivo.read()
     # substituindo as tags dentro do HTML, para maior controle
-    for tag, valor in configuracoes.TAGS_SUBSTITUICAO_HTML.items():
+    for tag, valor in environment.TAGS_SUBSTITUICAO_HTML.items():
         conteudo_html = conteudo_html.replace(tag, valor)
     return HTMLResponse(content=conteudo_html, status_code=200)
 
