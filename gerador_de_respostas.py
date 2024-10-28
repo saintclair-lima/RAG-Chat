@@ -1,132 +1,63 @@
 import torch
+from numpy import argmax, mean
 from transformers import BertTokenizer, BertForQuestionAnswering, pipeline
-from fastapi.responses import StreamingResponse
-from langchain_chroma import Chroma
-from langchain_ollama import ChatOllama
-from langchain_core.prompts import ChatPromptTemplate
-# from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
-from langchain_core.output_parsers import StrOutputParser
-# from langchain_core.runnables import RunnablePassthrough
-from pydantic import BaseModel
 import json
-import configuracoes
-
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-
 from time import time
 
-class DadosChat(BaseModel):
-    pergunta: str
-    historico: list
+from utils import InterfaceChroma, InterfaceOllama, DadosChat
+import environment
+from typing import Callable, Generator
+    
 
 class GeradorDeRespostas:
     '''
     Classe cuja função é realizar consulta em um banco de vetores existente e, por meio de uma API de um LLM
     gera uma texto de resposta que condensa as informações resultantes da consulta.
     '''
-    def __init__(self, url_banco_vetores,
-                    funcao_de_embeddings=None,
-                    device=configuracoes.DEVICE,
-                    tipo_de_busca=configuracoes.TIPO_DE_BUSCA,                   
-                    url_llama=configuracoes.URL_LLAMA,
-                    papel_do_LLM=None,
-                    numero_de_documentos_retornados=configuracoes.NUM_DOCUMENTOS_RETORNADOS,
-                    limiar_score_similaridade=configuracoes.LIMIAR_SCORE_SIMILARIDADE,
-                    verbose=True):
+    def __init__(self,
+                url_banco_vetores:str=environment.URL_BANCO_VETORES,
+                colecao_de_documentos:str=environment.NOME_COLECAO_DE_DOCUMENTOS,
+                funcao_de_embeddings:Callable=None,
+                fazer_log:bool=True):
+        self.executor = ThreadPoolExecutor(max_workers=environment.THREADPOOL_MAX_WORKERS)
         
-        self.executor = ThreadPoolExecutor(max_workers=configuracoes.THREADPOOL_MAX_WORKERS)
-        # If you're deploying this API using a web server like uvicorn or gunicorn, consider increasing the number of workers in production when deploying the API.
-        # Run on bash: uvicorn main:app --workers 5
-        
-        if tipo_de_busca == 'mmr':
-            argumentos_de_busca={'k':numero_de_documentos_retornados}
-        elif tipo_de_busca == 'similarity':
-            argumentos_de_busca={'k':numero_de_documentos_retornados}
-        elif tipo_de_busca == 'similarity_score_threshold':
-            argumentos_de_busca={'score_threshold':limiar_score_similaridade, 'k':numero_de_documentos_retornados}
+        if fazer_log: print('-- Gerador de respostas em inicialização...')
 
-        if not funcao_de_embeddings:
-            print(f'-- Criando a função de embeddings do ChromaDB com {configuracoes.MODELO_DE_EMBEDDINGS}')
-            from langchain_huggingface import HuggingFaceEmbeddings
-            funcao_de_embeddings = HuggingFaceEmbeddings(
-                model_name=configuracoes.MODELO_DE_EMBEDDINGS,
-                show_progress=True,
-                model_kwargs={"device": device},
-            )
-
-        
-        if verbose: print('-- Gerador de respostas em inicialização...')
-        if verbose: print('--- inicializando banco de vetores...')
-        self.banco_de_vetores = Chroma(
-            persist_directory=url_banco_vetores,
-            embedding_function=funcao_de_embeddings
-        )
-
-        if verbose: print('--- gerando retriever (gerenciador de consultas)...')
-        self.gerenciador_de_consulta = self.banco_de_vetores.as_retriever(search_type=tipo_de_busca, search_kwargs=argumentos_de_busca)
+        self.interface_chromadb = InterfaceChroma(url_banco_vetores, colecao_de_documentos, funcao_de_embeddings, fazer_log)
 
         # Carregando modelo e tokenizador pre-treinados
         # optou-se por não usar pipeline, por ser mais lento que usar o modelo diretamente
-        # self.modelo_bert_qa_pipeline = pipeline("question-answering", model=self.modelo_bert_qa, tokenizer=self.tokenizador_bert)
-        self.modelo_bert_qa = BertForQuestionAnswering.from_pretrained(configuracoes.EMBEDDING_SQUAD_PORTUGUESE)
-        self.tokenizador_bert = BertTokenizer.from_pretrained(configuracoes.EMBEDDING_SQUAD_PORTUGUESE)
-
-        if verbose: print('--- gerando a interface com o LLM...')
-        self.interface_llama = ChatOllama(
-            model="llama3.1",    # modelo llama a ser usado
-            temperature=0,       # 'temperature' controla a aleatoriedade da saída do modelo, sendo 0 o valor para saída determinística
-            base_url=url_llama,  # 'base_url' aponta para o end point da API do Llama
-        )
-
-        if not papel_do_LLM:
-            papel_do_LLM = '''Você é um assistente de servidores que responde a dúvidas de servidores da Assembleia Legislativa do Rio Grande do Norte.
-                            Você tem conhecimento sobre o regimento interno da ALRN, o regime jurídico dos servidores estaduais do RN, bem como resoluções da ALRN.
-                            ALERN e ALRN significam Assembleia Legislativa do Estado do Rio Grande do Norte.
-                            Use as informações do contexto fornecido para gerar uma resposta clara para a pergunta.
-                            Na resposta, não mencione que foi fornecido um texto, agindo como se o contexto fornecido fosse parte do seu conhecimento próprio.
-                            Quando adequado, pode citar os nomes dos documentos e números dos artigos em que a resposta se baseia.
-                            A resposta não deve ter saudação, nem qualquer tipo de introdução que dê a entender que não houve interação anterior.
-                            Assuma um tom formal, porém caloroso, com gentileza nas respostas.
-                            Utilize palavras e termos que sejam claros, autoexplicativos e linguagem simples, próximo do que o cidadão comum utiliza.
-                            Se você não souber a resposta, assuma um tom gentil e diga que não tem informações suficientes para responder.'''
-
-        if verbose: print('--- gerando template de respostas...')
-        self.template_do_prompt = ChatPromptTemplate.from_messages(
-            [    # Estabelece o papel que o LLM vai assumir ao responder as perguntas. Pode incluir o "tom" das respostas
-                ('system', papel_do_LLM),  
-
-                # Placeholder para o histórico do chat manter o contexto. Durante a execução será substituído pelo histórico real do chat
-                ("system", "HISTORICO (perguntas anteriores, não devem ser respondidas, só usadas para contexto) {historico_chat}"), 
-
-                # Placeholder para o input a ser fornecido durante a execução
-                # Será substituído pela pergunta do usuário e o contexto vindo do banco de vetores
-                ("human", "CONTEXTO: {contexto} \n\nPERGUNTA: {pergunta}"),
-            ]
-        )
-
-
-        # 'StrOutputParser' é usado para tratar a saída do chat, convertendo em um string
-        self.formatador_saida = StrOutputParser()
-
-        if verbose: print('--- inicialização completa!')
-
-    def formatar_documentos_recuperados(self, docs):
-        '''Função de formatação dos documentos. 'docs' é uma lista de objetos do tipo langchain_core.documents.Document'''
-        return "\n\n\n\n".join([f'{doc.metadata["titulo"]}, {doc.page_content}' for doc in docs])
-    
-    def avaliar_respostas_por_documento(self, pergunta, documento):
-        # Optou-se por não utilizar a abordagem com pipeline por ser mais lenta
-        # input = {
-        #     'question': pergunta,
-        #     'context': f'{documento.page_content}'
-        # }
-        # res = self.modelo_bert_qa_pipeline(input)
+        if fazer_log: print('--- preparando modelo e tokenizador do Bert...')
+        self.modelo_bert_qa = BertForQuestionAnswering.from_pretrained(environment.EMBEDDING_SQUAD_PORTUGUESE)
+        self.tokenizador_bert = BertTokenizer.from_pretrained(environment.EMBEDDING_SQUAD_PORTUGUESE)
         
-        marcador_tempo_inicio = time()
+        self.modelo_bert_qa_pipeline = pipeline("question-answering", environment.EMBEDDING_SQUAD_PORTUGUESE)
+
+        self.interface_ollama = InterfaceOllama(url_llama=environment.URL_LLAMA, nome_modelo=environment.MODELO_LLAMA)
+
+    def consultar_documentos_banco_vetores(self, pergunta: str, num_resultados:int=environment.NUM_DOCUMENTOS_RETORNADOS):
+        return self.interface_chromadb.consultar_documentos(pergunta, num_resultados)
+    
+    def formatar_lista_documentos(self, documentos: dict):
+        return [{'id': documentos['ids'][0][idx],
+                 'score_distancia': 2 - documentos['distances'][0][idx], # Distância do cosseno vaia entre 2 e 0
+                 'metadados': documentos['metadatas'][0][idx],
+                 'conteudo': documentos['documents'][0][idx]} for idx in range(len(documentos['ids'][0]))]
+
+    async def async_stream_wrapper(self, sync_generator: Generator):
+        loop = asyncio.get_running_loop()
+        for item in sync_generator:
+            yield await loop.run_in_executor(self.executor, lambda x=item: x)
+
+    def estimar_resposta(self, pergunta, texto_documento: str):
+        # Optou-se por não utilizar a abordagem com pipeline por ser mais lenta
+        res = self.modelo_bert_qa_pipeline(question=pergunta, context=texto_documento)
+        
         inputs = self.tokenizador_bert.encode_plus(
             pergunta,
-            documento.page_content,
+            texto_documento,
             return_tensors="pt",
             truncation=True,
             max_length=512
@@ -135,131 +66,106 @@ class GeradorDeRespostas:
         with torch.no_grad():
             outputs = self.modelo_bert_qa(**inputs)
 
-        start_logits = outputs.start_logits
-        end_logits = outputs.end_logits
+        # AFAZER: Avaliar se score ponderado faz sentido
+        logits_inicio = outputs.start_logits.numpy()
+        logits_inicio_positivos = [logit for logit in logits_inicio[0] if logit > 0]
+        media_logits_inicio_positivos = mean(logits_inicio_positivos) if logits_inicio_positivos else 0
+        indice_melhor_logit_inicio = argmax(logits_inicio[0])
+        melhor_logit_inicio = logits_inicio[0][indice_melhor_logit_inicio]
 
-        start_probs = torch.softmax(start_logits, dim=-1)
-        end_probs = torch.softmax(end_logits, dim=-1)
+        logits_fim = outputs.end_logits.numpy()
+        logits_fim_positivos = [logit for logit in logits_fim[0] if logit > 0]
+        media_logits_fim_positivos = mean(logits_fim_positivos) if logits_fim_positivos else 0
+        indice_melhor_logit_fim = argmax(logits_fim[0])
+        melhor_logit_fim = logits_fim[0][indice_melhor_logit_fim]
 
-        # Melhores k posições iniciais e finais
-        k = 5
+        media_logits_positivos = mean([media_logits_inicio_positivos, media_logits_fim_positivos])
 
-        # Get the top-k most probable start and end positions along with their probabilities
-        top_k_start = torch.topk(start_probs, k, dim=-1)
-        top_k_end = torch.topk(end_probs, k, dim=-1)
+        # scores em formato float para serialização com JSON
+        score = float(melhor_logit_inicio + melhor_logit_fim)
+        score_ponderado = float(score * media_logits_positivos)
+        score_estimado = float(torch.max(torch.softmax(outputs.start_logits, dim=-1))*torch.max(torch.softmax(outputs.end_logits, dim=-1)))
 
-        # Convert token indices back to string spans with their scores
-        possible_answers_with_scores = []
+        # score: soma do melhor Logit inicial com o melhor logit final
+        # score_estimado: multiplicação do softmax dos logits de inicio pelo dos logits de fim
+        # -- (manter somente se a performance do score do Bert pelo pipeline ficar lenta)
+        # score_ponderado: score ponderado pela média dos logits de inicio e fim, só quando positivos 
+        # -- (quanto mais logits positivos, mais o documento tem melhor avaliação)
 
-        # Iterate over all top-k start and end positions
-        for i in range(k):
-            for j in range(k):
-                start_idx = top_k_start.indices.squeeze()[i].item()
-                end_idx = top_k_end.indices.squeeze()[j].item()
-                # Ensure the end index comes after the start index
-                if end_idx >= start_idx:
-                    # Decode the answer from tokens
-                    answer_tokens = inputs['input_ids'][0][start_idx:end_idx + 1]
-                    answer = self.tokenizador_bert.decode(answer_tokens, skip_special_tokens=True)
-                    
-                    # Calculate the score as the product of the start and end probabilities (logits can also be used)
-                    score = start_probs[0, start_idx].item() * end_probs[0, end_idx].item()
-
-                    # Store the answer along with its score
-                    possible_answers_with_scores.append((answer, score))
-
-        # Sort the answers by score (optional, to see the best answers first)
-        possible_answers_with_scores = sorted(possible_answers_with_scores, key=lambda x: x[1], reverse=True)
-        marcador_tempo_fim = time()
-        tempo_decorrido = marcador_tempo_fim - marcador_tempo_inicio
-
+        tokens_resposta = inputs['input_ids'][0][indice_melhor_logit_inicio:indice_melhor_logit_fim + 1]
+        resposta = self.tokenizador_bert.decode(tokens_resposta, skip_special_tokens=True)
+        
         return {
-            'score': possible_answers_with_scores[0][1],
-            'possiveis_respostas': possible_answers_with_scores,
-            'tempo_decorrido': tempo_decorrido,
+            'resposta': (resposta, res['answer']),
+            'score': (score, res['score'], score_estimado),
+            'score_ponderado': score_ponderado
         }
 
-    
-    async def async_stream_wrapper(self, sync_generator):
-        """Run the synchronous generator in an executor to yield its items as they become available."""
-        loop = asyncio.get_running_loop()
-        for item in sync_generator:
-            yield await loop.run_in_executor(self.executor, lambda x=item: x)
-    
-    async def gerar_resposta(self, dadosChat: DadosChat):
-        # enviando a resposta por streaming ao usuário
-        return StreamingResponse(self.consultar(dadosChat), media_type="text/plain")
+    async def consultar(self, dados_chat: DadosChat, fazer_log:bool=True):
+        contexto = dados_chat.contexto
+        pergunta = dados_chat.pergunta
 
-    async def consultar(self, dadosChat: DadosChat, verbose=True):
-        '''Recebe uma pergunta, em formato de string, realiza uma consulta no banco de vetores,
-        passa os resultados para o LLM gerar uma resposta palatável e a retorna'''
+        if fazer_log: print(f'Gerador de respostas: realizando consulta para "{pergunta}"...')
 
-        pergunta = dadosChat.pergunta
-        historico_chat = [(("human", item[0]), ("ai", item[1])) for item in dadosChat.historico]
-
-
-        for item in dadosChat.historico:
-            historico_chat.append(("human", item[0]))
-            historico_chat.append(("ai", item[1]))
-
-        if verbose: print('Gerador de respostas: realizando consulta...')
-        if verbose: print(f'--- Pergunta feita: {pergunta}')
+        # Recuperando documentos usando o ChromaDB
         marcador_tempo_inicio = time()
-        # documentos_retornados = self.gerenciador_de_consulta.invoke(pergunta)
-        documentos_retornados = await asyncio.to_thread(self.gerenciador_de_consulta.invoke, pergunta)
+        documentos = await asyncio.to_thread(self.consultar_documentos_banco_vetores, pergunta)
+        lista_documentos = self.formatar_lista_documentos(documentos)
         marcador_tempo_fim = time()
         tempo_consulta = marcador_tempo_fim - marcador_tempo_inicio
-        if verbose: print(f'--- consulta no banco concluída ({tempo_consulta} segundos)')
+        if fazer_log: print(f'--- consulta no banco concluída ({tempo_consulta} segundos)')
 
-
-        # PARTE EXPERIMENTAL
-        scores = []
-        for documento in documentos_retornados:
-            avaliacao_respostas = self.avaliar_respostas_por_documento(pergunta, documento)
-            scores.append(avaliacao_respostas['score'])
-
-        # normalizando os scores
-        scores = [(score-min(scores)) /(max(scores) - min(scores)) for score in scores]
-
-        documentos_com_score = zip(documentos_retornados, scores)
-        documentos_com_score = sorted(documentos_com_score, key=lambda x: x[1], reverse=True)
-        for item in documentos_com_score:
-            print(item[1], item[0].metadata['titulo'] + item[0].metadata['subtitulo'])
-        documentos_selecionados = [documento[0] for documento in documentos_com_score if documento[1] >= 0.2]
-        ## FIM DA PARTE EXPERIMENTAL
-
-        # contexto = self.formatar_documentos_recuperados(documentos_retornados)
-        contexto = await asyncio.to_thread(self.formatar_documentos_recuperados, documentos_selecionados)
-        prompt_llama = self.template_do_prompt.invoke({"pergunta": pergunta, "contexto": contexto, 'historico_chat': historico_chat})
+        # Atribuindo scores usando Bert
+        if fazer_log: print(f'--- aplicando scores do Bert aos documentos recuperados...')
+        marcador_tempo_inicio = time()
+        for documento in lista_documentos:
+            resposta_estimada = self.estimar_resposta(pergunta, documento['conteudo'])
+            documento['score_bert'] = resposta_estimada['score']
+            documento['score_ponderado'] = resposta_estimada['score_ponderado']
+            documento['resposta_bert'] = resposta_estimada['resposta']
+        marcador_tempo_fim = time()
+        tempo_bert = marcador_tempo_fim - marcador_tempo_inicio
+        if fazer_log: print(f'--- scores atribuídos ({tempo_bert} segundos)')
         
-        if verbose: print(f'--- gerando resposta com o Llama')
+        # Gerando resposta utilizando o Llama
+        if fazer_log: print(f'--- gerando resposta com o Llama')
         marcador_tempo_inicio = time()
         texto_resposta_llama = ''
+        flag_tempo_resposta = False     
+        async for item in self.async_stream_wrapper(
+                self.interface_ollama.gerar_resposta_llama(
+                    pergunta=pergunta,
+                    documentos=documentos['documents'][0],
+                    contexto=contexto)):
+            
+            texto_resposta_llama += item['response']
+            yield item['response']
+            if not flag_tempo_resposta:
+                flag_tempo_resposta = True
+                tempo_inicio_resposta = time() - marcador_tempo_inicio
+                if fazer_log: print(f'----- iniciou retorno da resposta ({tempo_inicio_resposta} segundos)')
 
-        # Wrap the synchronous stream in an asynchronous generator
-        async for item in self.async_stream_wrapper(self.interface_llama.stream(prompt_llama)):
-            texto_resposta_llama += item.content
-            yield item.content
-        
-        item.content = texto_resposta_llama
-        resposta_llama = item
+        item['response'] = texto_resposta_llama
         marcador_tempo_fim = time()
         tempo_llama = marcador_tempo_fim - marcador_tempo_inicio
-        if verbose: print(f'--- resposta gerada em ({tempo_llama} segundos)')
-        resposta_formatada = self.formatador_saida.invoke(resposta_llama)
+        if fazer_log: print(f'--- resposta do Llama concluída ({tempo_llama} segundos)')
 
-        dadosChat.historico.append(("human", pergunta))
-        dadosChat.historico.append(("ai", resposta_formatada))
         yield "CHEGOU_AO_FIM_DO_TEXTO_DA_RESPOSTA"
+
+        # Retornando dados compilados
         yield json.dumps(
             {
                 "pergunta": pergunta,
-                "documentos": [item.model_dump_json() for item in documentos_selecionados],
-                "contexto": prompt_llama.messages[1].content,
-                "resposta_llama": resposta_llama.model_dump_json(),
-                "resposta": resposta_formatada.replace('\n\n', '\n'),
-                "historico": dadosChat.historico,
+                "documentos": lista_documentos,
+                "resposta_llama": item,
+                "resposta": texto_resposta_llama.replace('\n\n', '\n'),
                 "tempo_consulta": tempo_consulta,
-                "tempo_llama": tempo_llama
-                }
-            )
+                "tempo_bert": tempo_bert,
+                "tempo_inicio_resposta": tempo_inicio_resposta,
+                "tempo_llama_total": tempo_llama
+            },
+            ensure_ascii=False
+        )
+        print('Concluído')
+
+    
