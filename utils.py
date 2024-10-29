@@ -2,7 +2,7 @@ from chromadb import chromadb, Documents, EmbeddingFunction, Embeddings
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
 
-import requests
+import httpx
 import json
 import environment
 from typing import List
@@ -26,23 +26,25 @@ class ClienteOllama:
         self.url_llama = url_llama
         self.temperature = temperature
 
-    def stream(self, prompt: str, contexto=[]):
+    async def stream(self, prompt: str, contexto=[]):
         url = f"{self.url_llama}/api/generate"
         
         payload = {
             "model": self.modelo,
             "prompt": prompt,
             "temperature": self.temperature,
-            "context": contexto
+            "context": contexto,
+            "stream": True
         }
         
-        resposta = requests.post(url, json=payload, stream=True)
-        
-        resposta.raise_for_status()
-        
-        for fragmento in resposta.iter_content(chunk_size=None):
-            if fragmento:
-                yield json.loads(fragmento.decode())
+        # Using httpx in synchronous mode
+        async with httpx.AsyncClient() as client:
+            async with client.stream("POST", url, json=payload, timeout=120) as resposta:
+                resposta.raise_for_status()
+
+                async for fragmento in resposta.aiter_bytes():
+                    if fragmento:
+                        yield json.loads(fragmento.decode())
 
 class InterfaceOllama:
     def __init__(self, nome_modelo: str, url_llama: str, temperature: float=0):
@@ -74,10 +76,10 @@ class InterfaceOllama:
             DIRETRIZES PARA AS RESPOSTAS: {self.diretrizes}'''
         return f'<s>[INST]<<SYS>>\n{definicoes_sistema}\n<</SYS>>\n\n{prompt_usuario}[/INST]'
     
-    def gerar_resposta_llama(self, pergunta: str, documentos: List[str], contexto=[int]):
+    async def gerar_resposta_llama(self, pergunta: str, documentos: List[str], contexto=[int]):
         prompt_usuario = self.formatar_prompt_usuario(pergunta, documentos)
         prompt = self.criar_prompt_llama(prompt_usuario=prompt_usuario)
-        for fragmento_resposta in self.cliente_ollama.stream(prompt=prompt, contexto=contexto):
+        async for fragmento_resposta in self.cliente_ollama.stream(prompt=prompt, contexto=contexto):
             yield fragmento_resposta
 
 class InterfaceChroma:

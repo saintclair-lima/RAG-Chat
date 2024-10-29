@@ -37,7 +37,7 @@ class GeradorDeRespostas:
 
         self.interface_ollama = InterfaceOllama(url_llama=environment.URL_LLAMA, nome_modelo=environment.MODELO_LLAMA)
 
-    def consultar_documentos_banco_vetores(self, pergunta: str, num_resultados:int=environment.NUM_DOCUMENTOS_RETORNADOS):
+    async def consultar_documentos_banco_vetores(self, pergunta: str, num_resultados:int=environment.NUM_DOCUMENTOS_RETORNADOS):
         return self.interface_chromadb.consultar_documentos(pergunta, num_resultados)
     
     def formatar_lista_documentos(self, documentos: dict):
@@ -51,7 +51,7 @@ class GeradorDeRespostas:
         for item in sync_generator:
             yield await loop.run_in_executor(self.executor, lambda x=item: x)
 
-    def estimar_resposta(self, pergunta, texto_documento: str):
+    async def estimar_resposta(self, pergunta, texto_documento: str):
         # Optou-se por não utilizar a abordagem com pipeline por ser mais lenta
         res = self.modelo_bert_qa_pipeline(question=pergunta, context=texto_documento)
         
@@ -109,7 +109,7 @@ class GeradorDeRespostas:
 
         # Recuperando documentos usando o ChromaDB
         marcador_tempo_inicio = time()
-        documentos = await asyncio.to_thread(self.consultar_documentos_banco_vetores, pergunta)
+        documentos = await self.consultar_documentos_banco_vetores(pergunta)
         lista_documentos = self.formatar_lista_documentos(documentos)
         marcador_tempo_fim = time()
         tempo_consulta = marcador_tempo_fim - marcador_tempo_inicio
@@ -119,7 +119,7 @@ class GeradorDeRespostas:
         if fazer_log: print(f'--- aplicando scores do Bert aos documentos recuperados...')
         marcador_tempo_inicio = time()
         for documento in lista_documentos:
-            resposta_estimada = self.estimar_resposta(pergunta, documento['conteudo'])
+            resposta_estimada = await self.estimar_resposta(pergunta, documento['conteudo'])
             documento['score_bert'] = resposta_estimada['score']
             documento['score_ponderado'] = resposta_estimada['score_ponderado']
             documento['resposta_bert'] = resposta_estimada['resposta']
@@ -132,11 +132,10 @@ class GeradorDeRespostas:
         marcador_tempo_inicio = time()
         texto_resposta_llama = ''
         flag_tempo_resposta = False     
-        async for item in self.async_stream_wrapper(
-                self.interface_ollama.gerar_resposta_llama(
+        async for item in self.interface_ollama.gerar_resposta_llama(
                     pergunta=pergunta,
                     documentos=documentos['documents'][0],
-                    contexto=contexto)):
+                    contexto=contexto):
             
             texto_resposta_llama += item['response']
             yield item['response']
