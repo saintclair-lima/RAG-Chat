@@ -1,14 +1,15 @@
-import torch
-from numpy import argmax, mean
-from transformers import BertTokenizer, BertForQuestionAnswering, pipeline
 import json
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
-from time import time
+import torch
 
-from utils import InterfaceChroma, InterfaceOllama, DadosChat
-import environment
+from concurrent.futures import ThreadPoolExecutor
+from numpy import argmax, mean
+from time import time
+from transformers import BertTokenizer, BertForQuestionAnswering, pipeline
 from typing import Callable, Generator
+
+import environment
+from utils import InterfaceChroma, InterfaceOllama, DadosChat
     
 
 class GeradorDeRespostas:
@@ -46,6 +47,8 @@ class GeradorDeRespostas:
                  'metadados': documentos['metadatas'][0][idx],
                  'conteudo': documentos['documents'][0][idx]} for idx in range(len(documentos['ids'][0]))]
 
+    # AFAZER: Considerar remover essa função.
+    # Era utilizada com gerar_resposta_llama, mas ficou obsoleta usando o for assíncrono
     async def async_stream_wrapper(self, sync_generator: Generator):
         loop = asyncio.get_running_loop()
         for item in sync_generator:
