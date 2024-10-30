@@ -14,7 +14,7 @@ class DadosChat(BaseModel):
 
 class FuncaoEmbeddings(EmbeddingFunction):
     def __init__(self, model_name: str, biblioteca=SentenceTransformer):
-        self.model = biblioteca(model_name)
+        self.model = biblioteca(model_name, cache_folder=environment.URL_MODEL_CACHE)
 
     def __call__(self, input: Documents) -> Embeddings:
         embeddings = self.model.encode(input, convert_to_numpy=True)
