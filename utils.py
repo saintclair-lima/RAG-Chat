@@ -34,7 +34,8 @@ class ClienteOllama:
             "prompt": prompt,
             "temperature": self.temperature,
             "context": contexto,
-            "stream": True
+            "stream": True,
+            "max_new_tokens": 4096
         }
         
         # Using httpx in synchronous mode
@@ -44,39 +45,33 @@ class ClienteOllama:
 
                 async for fragmento in resposta.aiter_bytes():
                     if fragmento:
-                        yield json.loads(fragmento.decode())
+                        try:
+                            yield json.loads(fragmento.decode())
+                        except:
+                            print('ERRO: falha na serialização do fragmento\n' + fragmento.decode())
 
 class InterfaceOllama:
     def __init__(self, nome_modelo: str, url_llama: str, temperature: float=0):
 
         self.cliente_ollama = ClienteOllama(url_llama= url_llama, nome_modelo=nome_modelo, temperature=temperature)
 
-        self.papel_do_LLM = '''\
-            ALERN e ALRN significam Assembleia Legislativa do Estado do Rio Grande do Norte. \
-            Você é um assistente que responde a dúvidas de servidores da ALERN. \
-            Você tem conhecimento sobre o regimento interno da ALRN, o regime jurídico dos servidores estaduais do RN, bem como resoluções da ALRN. \
-            Assuma um tom formal, porém caloroso, com gentileza nas respostas. \
-            Utilize palavras e termos que sejam claros, autoexplicativos e linguagem simples, próximo do que o cidadão comum utiliza.'''
+        self.papel_do_LLM = '''ALERN e ALRN significam Assembleia Legislativa do Estado do Rio Grande do Norte.
+Você é um assistente que responde a dúvidas de servidores da ALERN sobre o regimento interno da ALRN, o regime jurídico dos servidores estaduais do RN, bem como resoluções da ALRN.
+Assuma um tom formal, porém caloroso, com gentileza nas respostas. Utilize palavras e termos que sejam claros, autoexplicativos e linguagem simples, próximo do que o cidadão comum utiliza.'''
         
-        self.diretrizes = ''' \
-            Use as informações dos DOCUMENTOS fornecidos para gerar uma resposta clara para a PERGUNTA. \
-            Na resposta, não mencione que foi fornecido um texto, agindo como se o contexto fornecido fosse parte do seu conhecimento próprio. \
-            Quando adequado, pode citar os nomes dos DOCUMENTOS e números dos artigos em que a resposta se baseia. \
-            A resposta não deve ter saudação, vocativo, nem qualquer tipo de introdução que dê a entender que não houve interação anterior. \
-            Se você não souber a resposta, assuma um tom gentil e diga que não tem informações suficientes para responder.'''
+        self.diretrizes = '''Use as informações dos DOCUMENTOS fornecidos para gerar uma resposta clara para a PERGUNTA.
+Na resposta, não mencione que foi fornecido um texto de referência. Cite os nomes dos DOCUMENTOS e números dos artigos em que a resposta se baseia.
+A resposta não deve ter saudação, vocativo, nem qualquer tipo de introdução que dê a entender que não houve interação anterior.
+Se você não souber a resposta, assuma um tom gentil e diga que não tem informações suficientes para responder.'''
 
     def formatar_prompt_usuario(self, pergunta: str, documentos: List[str]):
-        return f'''\
-            DOCUMENTOS:\n\
-            {'\n'.join(documentos)}\n\
-            PERGUNTA: {pergunta}'''
+        return f'''DOCUMENTOS:\n{'\n'.join(documentos)}\nPERGUNTA: {pergunta}'''
 
     def criar_prompt_llama(self, prompt_usuario: str):
-        definicoes_sistema = f'''{self.papel_do_LLM}\n\
-            DIRETRIZES PARA AS RESPOSTAS: {self.diretrizes}'''
-        return f'<s>[INST]<<SYS>>\n{definicoes_sistema}\n<</SYS>>\n\n{prompt_usuario}[/INST]'
+        definicoes_sistema = f'''{self.papel_do_LLM} DIRETRIZES PARA AS RESPOSTAS: {self.diretrizes}'''
+        return f'<s>[INST]<<SYS>>\n{definicoes_sistema}\n<</SYS>>\n{prompt_usuario}[/INST]'
     
-    async def gerar_resposta_llama(self, pergunta: str, documentos: List[str], contexto=[int]):
+    async def gerar_resposta_llama(self, pergunta: str, documentos: List[str], contexto:List[int]=environment.CONTEXTO_BASE):
         prompt_usuario = self.formatar_prompt_usuario(pergunta, documentos)
         prompt = self.criar_prompt_llama(prompt_usuario=prompt_usuario)
         async for fragmento_resposta in self.cliente_ollama.stream(prompt=prompt, contexto=contexto):
@@ -101,5 +96,5 @@ class InterfaceChroma:
         if fazer_log: print(f'--- definindo a coleção a ser usada ({colecao_de_documentos})...')
         self.colecao_documentos = self.banco_de_vetores.get_collection(name=colecao_de_documentos, embedding_function=funcao_de_embeddings)
     
-    def consultar_documentos(self, termos_de_consulta: str, num_resultados=5):
+    def consultar_documentos(self, termos_de_consulta: str, num_resultados=environment.NUM_DOCUMENTOS_RETORNADOS):
         return self.colecao_documentos.query(query_texts=[termos_de_consulta], n_results=num_resultados)

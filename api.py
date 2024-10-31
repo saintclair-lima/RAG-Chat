@@ -8,7 +8,7 @@ import environment
 from gerador_de_respostas import GeradorDeRespostas, DadosChat
 from utils import FuncaoEmbeddings
 
-print('Instanciando a api (FastAPI)')
+print('Instanciando a api (FastAPI)...')
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -18,7 +18,7 @@ app.add_middleware(
     allow_headers=['*'],  # Allow all headers
 )
 
-print(f'Criando a função de embeddings com {environment.MODELO_DE_EMBEDDINGS}')
+print(f'Criando GeradorDeRespostas (usando {environment.MODELO_DE_EMBEDDINGS})...')
 funcao_de_embeddings = FuncaoEmbeddings(model_name=environment.MODELO_DE_EMBEDDINGS, biblioteca=SentenceTransformer)
 
 gerador_de_respostas = GeradorDeRespostas(funcao_de_embeddings=funcao_de_embeddings, url_banco_vetores=environment.URL_BANCO_VETORES)

@@ -5,7 +5,7 @@ url = 'http://localhost:11434/api/generate'
 def gerar_perguntas(artigo, contexto):
     prompt = '''Considere o artigo abaixo. Crie pelo menos 5 perguntas que possam ser respondidas com fragmentos do artigo. A saída deve ser uma lista de objetos JSON, com os atributos {{"pergunta": "Texto da pergunta Gerada", "resposta": "fragmento do artigo que responde a pergunta"}}. Não adicione nada na resposta, exceto a lista de objetos JSON, sem qualquer comentário adicional. ARTIGO: {}'''.format(artigo)
     payload = {
-        "model": 'llama3.1',
+        "model": 'llama3.2',
         "prompt": prompt,
         "temperature": 0.0,
         "context": contexto
@@ -19,7 +19,12 @@ def gerar_perguntas(artigo, contexto):
             texto_resposta += dados['response']
     return texto_resposta
 
+
+
 documentos = []
+titulos = []
+id=1
+
 for k, v in environment.DOCUMENTOS.items():
     URL_DADOS = './' + v['url']
     print(f'''Lendo o arquivo {URL_DADOS}...''')
@@ -62,13 +67,31 @@ for k, v in environment.DOCUMENTOS.items():
             artigos.append(fragmento_artigo)
         else:
             artigos.append(art)
-    for artigo in artigos: documentos.append(artigo)
+    print('''Criando os documentos com base nos artigos...''')
+    for artigo in artigos:
+        tit = artigo.split('. ')[1]
+        titulos.append(tit)
+        doc = {
+            'id': id,
+            'page_content': artigo,
+            'metadata': {
+                'titulo': f'{v["titulo"]}',
+                'subtitulo': f'Art. {tit} - {titulos.count(tit)}',
+                'autor': f'{v["autor"]}',
+                'fonte': f'{v["fonte"]}',
+            },
+        }
+        documentos.append(doc)
+        id += 1
 
-num_arts = len(documentos)
+qtd_docs = len(documentos)
+for idx in range(qtd_docs):
+    print(f'Processando documento {idx+1} de {qtd_docs}')
+    doc = documentos[idx]    
+    perguntas = gerar_perguntas(artigo=doc['page_content'], contexto=[])
+    doc['perguntas'] = perguntas
 
-for idx in range(num_arts):
-    artigo = documentos[idx]
-    print(f'Artigo {idx+1} de {num_arts}')
-    perguntas = gerar_perguntas(artigo=artigo, contexto=[])
-    with open('perguntas.txt', 'a') as arq:
-        arq.write(perguntas + '\n\n')
+print('Salvando arquivo com perguntas...')
+import pickle
+with open('documentos.pickle', 'wb') as f:
+    pickle.dump(documentos, f, pickle.HIGHEST_PROTOCOL)
