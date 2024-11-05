@@ -65,7 +65,7 @@ A resposta não deve ter saudação, vocativo, nem qualquer tipo de introdução
 Se você não souber a resposta, assuma um tom gentil e diga que não tem informações suficientes para responder.'''
 
     def formatar_prompt_usuario(self, pergunta: str, documentos: List[str]):
-        return f'''DOCUMENTOS:\n{'\n'.join(documentos)}\nPERGUNTA: {pergunta}'''
+        return 'DOCUMENTOS:\n{}\nPERGUNTA: {}'.format('\n'.join(documentos), pergunta)
 
     def criar_prompt_llama(self, prompt_usuario: str):
         definicoes_sistema = f'''{self.papel_do_LLM} DIRETRIZES PARA AS RESPOSTAS: {self.diretrizes}'''
