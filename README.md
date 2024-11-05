@@ -73,3 +73,66 @@ ollama serve
 Caso `OLLAMA_DEBUG` esteja configurado como `true` é feito um log com as configurações de inicialização do Ollama.
 
 ## Python: Instalação e Configuração
+### Instalando Python
+#### Windows
+Instale Python e o gerenciador de pacotes do Python `pip`.
+* Acesse a página de download do instalador (https://www.python.org/downloads/)
+* Execute o instalador, seguindo as orientações em tela.
+* _OBS:_ O instalador Windows já oferece a opção de incluir o `pip` durante a instalação do Python.
+
+#### Linux
+Utilize o gerenciador de pacotes da sua distribuição para instalar.
+
+```
+sudo apt install python3
+sudo apt install pip
+```
+### OPCIONAL: Utilizando um ambiente virtual Python
+Após a instalação do Python, você pode optar por criar um ambiente Python específico para a instalação dos pacotes necessários a este projeto. Assim, você pode utilizar a mesma instalação do Python em outros projetos, com outras versões de bibliotecas diferentes deste.
+
+Apesar de não ser obrigatório, é aconselhado, para fins de organização, apenas, a realização desse procedimento.
+
+#### Criando o ambiente virtual
+Dentro da pasta do projeto (ver mais abaixo), basta executar o seguinte para realizar a criação do ambiente:
+
+```
+python -m venv <nome-do-ambiente-à-sua-escolha>
+```
+
+No nosso caso, para fins de conveniência, utilizamos `chat-env` como nome do modelo (o controle de versão está configurado para ignorar esses arquivos, como se pode ver no arquivo `.gitignore` - ver mais abaixo).
+
+#### Ativando o ambiente virtual
+Após criar o ambiente virtual, é necessário ativá-lo. Para isso, acessa a pasta do projeto a partir do terminal/prompt/Powershell.
+
+##### Linux
+```
+source ./<nome-do-ambiente>/bin/activate
+```
+No nosso caso:
+```
+source ./chat-env/bin/activate
+```
+
+##### Windows
+```
+./<nome-do-ambiente>/Scripts/activate
+```
+No nosso caso:
+```
+source ./chat-env/Scripts/activate
+```
+
+#### Desativando o ambiente virtual
+```
+deactivate
+```
+
+## Copiando e Configurando o Projeto
+### Baixando os arquivos do projeto
+Utilize o git para baixar o repositório
+
+```git
+git clone https://github.com/saintclair-lima/RAG-Chat.git
+
+cd ./RAG-Chat
+```
