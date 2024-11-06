@@ -136,3 +136,13 @@ git clone https://github.com/saintclair-lima/RAG-Chat.git
 
 cd ./RAG-Chat
 ```
+
+### Instalando as dependências
+```
+pip install -r requirements.txt
+```
+### Iniciando o projeto
+```
+uvicorn api:app --reload
+
+```
