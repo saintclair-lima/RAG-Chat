@@ -137,6 +137,10 @@ git clone https://github.com/saintclair-lima/RAG-Chat.git
 cd ./RAG-Chat
 ```
 
+O `.gitignore` do repositório está configurado para ignorar a pasta com os arquivos do ambiente virtual Python, de forma a não incluí-la no controle de versão. O nome de referência da dita pasta está como `chat-env`, sendo o motivo pelo qual sugerimos nomear o ambiente virtual como `chat-env`.
+
+Na pasta raiz do projeto, crie um arquivo `.env`, salvando nele o conteúdo do .env.TEMPLATE, alterando os valores de acordo com o ambiente de execução.
+
 ### Instalando as dependências
 ```
 pip install -r requirements.txt
