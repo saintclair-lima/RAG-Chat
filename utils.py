@@ -1,6 +1,7 @@
 from chromadb import chromadb, Documents, EmbeddingFunction, Embeddings
 from pydantic import BaseModel
 from sentence_transformers import SentenceTransformer
+from torch import cuda
 
 import httpx
 import json
@@ -13,11 +14,17 @@ class DadosChat(BaseModel):
     contexto: list
 
 class FuncaoEmbeddings(EmbeddingFunction):
-    def __init__(self, model_name: str, biblioteca=SentenceTransformer):
-        self.model = biblioteca(model_name)
+    def __init__(self, model_name: str, biblioteca=SentenceTransformer, device: str=None):
+        if device:
+            self.device = device
+        else:
+            self.device = 'cuda' if cuda.is_available() else 'cpu'
+        
+        self.model = biblioteca(model_name, device=self.device)
+        self.model.to(self.device)
 
     def __call__(self, input: Documents) -> Embeddings:
-        embeddings = self.model.encode(input, convert_to_numpy=True)
+        embeddings = self.model.encode(input, convert_to_numpy=True, device=self.device)
         return embeddings.tolist()
     
 class ClienteOllama:
@@ -60,7 +67,7 @@ Você é um assistente que responde a dúvidas de servidores da ALERN sobre o re
 Assuma um tom formal, porém caloroso, com gentileza nas respostas. Utilize palavras e termos que sejam claros, autoexplicativos e linguagem simples, próximo do que o cidadão comum utiliza.'''
         
         self.diretrizes = '''Use as informações dos DOCUMENTOS fornecidos para gerar uma resposta clara para a PERGUNTA.
-Na resposta, não mencione que foi fornecido um texto de referência. Cite os nomes dos DOCUMENTOS e números dos artigos em que a resposta se baseia.
+Na resposta, não mencione que foi fornecido documentos de referência. Cite os nomes dos DOCUMENTOS e números dos artigos em que a resposta se baseia.
 A resposta não deve ter saudação, vocativo, nem qualquer tipo de introdução que dê a entender que não houve interação anterior.
 Se você não souber a resposta, assuma um tom gentil e diga que não tem informações suficientes para responder.'''
 
@@ -87,8 +94,8 @@ class InterfaceChroma:
         if fazer_log: print('--- interface do ChromaDB em inicialização')
 
         if not funcao_de_embeddings:
-            print(f'--- criando a função de embeddings do ChromaDB com {environment.MODELO_DE_EMBEDDINGS}...')
-            funcao_de_embeddings = FuncaoEmbeddings(model_name=environment.MODELO_DE_EMBEDDINGS, biblioteca=SentenceTransformer)
+            print(f'--- criando a função de embeddings do ChromaDB com {environment.MODELO_DE_EMBEDDINGS} (device={environment.DEVICE})...')
+            funcao_de_embeddings = FuncaoEmbeddings(model_name=environment.MODELO_DE_EMBEDDINGS, biblioteca=SentenceTransformer, device=environment.DEVICE)
         
         if fazer_log: print('--- inicializando banco de vetores...')
         self.banco_de_vetores = chromadb.PersistentClient(path=url_banco_vetores)

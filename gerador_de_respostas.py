@@ -3,7 +3,6 @@ import asyncio
 import torch
 
 from concurrent.futures import ThreadPoolExecutor
-from numpy import argmax, mean
 from time import time
 from transformers import BertTokenizer, BertForQuestionAnswering, pipeline
 from typing import Callable, Generator
@@ -21,20 +20,23 @@ class GeradorDeRespostas:
                 url_banco_vetores:str=environment.URL_BANCO_VETORES,
                 colecao_de_documentos:str=environment.NOME_COLECAO_DE_DOCUMENTOS,
                 funcao_de_embeddings:Callable=None,
-                fazer_log:bool=True):
+                fazer_log:bool=True,
+                device: str=None):
+
+        self.device = device
         self.executor = ThreadPoolExecutor(max_workers=environment.THREADPOOL_MAX_WORKERS)
         
-        if fazer_log: print('-- Gerador de respostas em inicialização...')
+        if fazer_log: print(f'-- Gerador de respostas em inicialização (device={self.device})...')
 
         self.interface_chromadb = InterfaceChroma(url_banco_vetores, colecao_de_documentos, funcao_de_embeddings, fazer_log)
 
         # Carregando modelo e tokenizador pre-treinados
         # optou-se por não usar pipeline, por ser mais lento que usar o modelo diretamente
         if fazer_log: print(f'--- preparando modelo e tokenizador do Bert (usando {environment.EMBEDDING_SQUAD_PORTUGUESE})...')
-        self.modelo_bert_qa = BertForQuestionAnswering.from_pretrained(environment.EMBEDDING_SQUAD_PORTUGUESE)
-        self.tokenizador_bert = BertTokenizer.from_pretrained(environment.EMBEDDING_SQUAD_PORTUGUESE)
+        self.modelo_bert_qa = BertForQuestionAnswering.from_pretrained(environment.EMBEDDING_SQUAD_PORTUGUESE).to(self.device)
+        self.tokenizador_bert = BertTokenizer.from_pretrained(environment.EMBEDDING_SQUAD_PORTUGUESE, device=self.device)
         
-        self.modelo_bert_qa_pipeline = pipeline("question-answering", environment.EMBEDDING_SQUAD_PORTUGUESE)
+        self.modelo_bert_qa_pipeline = pipeline("question-answering", environment.EMBEDDING_SQUAD_PORTUGUESE, device=self.device)
 
         if fazer_log: print(f'--- preparando o Llama (usando {environment.MODELO_LLAMA})...')
         self.interface_ollama = InterfaceOllama(url_llama=environment.URL_LLAMA, nome_modelo=environment.MODELO_LLAMA)
@@ -43,10 +45,14 @@ class GeradorDeRespostas:
         return self.interface_chromadb.consultar_documentos(pergunta, num_resultados)
     
     def formatar_lista_documentos(self, documentos: dict):
-        return [{'id': documentos['ids'][0][idx],
-                 'score_distancia': 2 - documentos['distances'][0][idx], # Distância do cosseno vaia entre 2 e 0
+        return [
+            {
+                'id': documentos['ids'][0][idx],
+                 'score_distancia': 1 - documentos['distances'][0][idx], # Distância do cosseno vaia entre 1 e 0
                  'metadados': documentos['metadatas'][0][idx],
-                 'conteudo': documentos['documents'][0][idx]} for idx in range(len(documentos['ids'][0]))]
+                 'conteudo': f"{documentos['metadatas'][0][idx]['titulo']} - {documentos['documents'][0][idx]}"
+            }
+            for idx in range(len(documentos['ids'][0]))]
 
     # AFAZER: Considerar remover essa função.
     # Era utilizada com gerar_resposta_llama, mas ficou obsoleta usando o for assíncrono
@@ -58,7 +64,6 @@ class GeradorDeRespostas:
     async def estimar_resposta(self, pergunta, texto_documento: str):
         # Optou-se por não utilizar a abordagem com pipeline por ser mais lenta
         res = self.modelo_bert_qa_pipeline(question=pergunta, context=texto_documento)
-        
         inputs = self.tokenizador_bert.encode_plus(
             pergunta,
             texto_documento,
@@ -67,28 +72,42 @@ class GeradorDeRespostas:
             max_length=512
         )
 
+        inputs = {key: value.to(self.device) for key, value in inputs.items()}
+        
         with torch.no_grad():
             outputs = self.modelo_bert_qa(**inputs)
 
         # AFAZER: Avaliar se score ponderado faz sentido
-        logits_inicio = outputs.start_logits.numpy()
-        logits_inicio_positivos = [logit for logit in logits_inicio[0] if logit > 0]
-        media_logits_inicio_positivos = mean(logits_inicio_positivos) if logits_inicio_positivos else 0
-        indice_melhor_logit_inicio = argmax(logits_inicio[0])
-        melhor_logit_inicio = logits_inicio[0][indice_melhor_logit_inicio]
+        # Extraindo os logits como tensores
+        logits_inicio = outputs.start_logits
+        logits_fim = outputs.end_logits
 
-        logits_fim = outputs.end_logits.numpy()
-        logits_fim_positivos = [logit for logit in logits_fim[0] if logit > 0]
-        media_logits_fim_positivos = mean(logits_fim_positivos) if logits_fim_positivos else 0
-        indice_melhor_logit_fim = argmax(logits_fim[0])
-        melhor_logit_fim = logits_fim[0][indice_melhor_logit_fim]
+        # Obtenção dos logits positivos
+        logits_inicio_positivos = logits_inicio[0][logits_inicio[0] > 0]
+        logits_fim_positivos = logits_fim[0][logits_fim[0] > 0]
 
-        media_logits_positivos = mean([media_logits_inicio_positivos, media_logits_fim_positivos])
+        # Média dos logits positivos
+        media_logits_inicio_positivos = logits_inicio_positivos.mean().item() if logits_inicio_positivos.numel() > 0 else 0
+        media_logits_fim_positivos = logits_fim_positivos.mean().item() if logits_fim_positivos.numel() > 0 else 0
+
+        # Obtendo os índices e valores dos melhores logits
+        indice_melhor_logit_inicio = logits_inicio[0].argmax().item()
+        melhor_logit_inicio = logits_inicio[0][indice_melhor_logit_inicio].item()
+
+        indice_melhor_logit_fim = logits_fim[0].argmax().item()
+        melhor_logit_fim = logits_fim[0][indice_melhor_logit_fim].item()
+
+        # Calcula media_logits_positivos
+        media_logits_positivos = (media_logits_inicio_positivos + media_logits_fim_positivos) / 2
 
         # scores em formato float para serialização com JSON
         score = float(melhor_logit_inicio + melhor_logit_fim)
         score_ponderado = float(score * media_logits_positivos)
-        score_estimado = float(torch.max(torch.softmax(outputs.start_logits, dim=-1))*torch.max(torch.softmax(outputs.end_logits, dim=-1)))
+
+        # calculando score estimado
+        start_logits_softmax = torch.softmax(logits_inicio, dim=-1)
+        end_logits_softmax = torch.softmax(logits_fim, dim=-1)
+        score_estimado = float(torch.max(start_logits_softmax).item() * torch.max(end_logits_softmax).item())
 
         # score: soma do melhor Logit inicial com o melhor logit final
         # score_estimado: multiplicação do softmax dos logits de inicio pelo dos logits de fim
