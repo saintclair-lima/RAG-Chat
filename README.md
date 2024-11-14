@@ -76,7 +76,8 @@ Caso `OLLAMA_DEBUG` esteja configurado como `true` é feito um log com as config
 ### Instalando Python
 #### Windows
 Instale Python e o gerenciador de pacotes do Python `pip`.
-* Acesse a página de download do instalador (https://www.python.org/downloads/)
+* Acesse a página de download do instalador (https://www.python.org/downloads/).
+* Até 13/11/2024 a versão mais recente do Python não tem uma versão do `torch` disponível. É necessário utilizar a versão 3.12 do Python.
 * Execute o instalador, seguindo as orientações em tela.
 * _OBS:_ O instalador Windows já oferece a opção de incluir o `pip` durante a instalação do Python.
 
@@ -142,7 +143,23 @@ O `.gitignore` do repositório está configurado para ignorar a pasta com os arq
 Na pasta raiz do projeto, crie um arquivo `.env`, salvando nele o conteúdo do .env.TEMPLATE, alterando os valores de acordo com o ambiente de execução.
 
 ### Instalando as dependências
+
+Dependendo do dispositivo de processamento (CPU/GPU) a ser utilizado, é necessário instalar uma versão específica do `torch`.
+
+Em ambientes que dispõem somente de CPU, nos requirements deve se manter as linhas abaixo:
 ```
+--find-links https://download.pytorch.org/whl/cpu
+torch==2.5.0
+```
+
+Em ambientes com placa de vídeo com suporte a CUDA, deve-se alterar para buscar a versão adequada to `torch` com o suporte à versão do CUDA que a placa utiliza.
+
+É possível acessar https://pytorch.org/get-started/locally/ e se obter o link adequado, dependendo da versão.
+
+No caso da versão 12.4 do CUDA, é necessaário alterar para:
+
+```
+--find-links https://download.pytorch.org/whl/cu124
 pip install -r requirements.txt
 ```
 ### Iniciando o projeto
