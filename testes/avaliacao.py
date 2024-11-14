@@ -1,19 +1,20 @@
+## print('Para simplicidade, mover o arquivo para a pasta principal para executar')
 print('Importando bibliotecas...')
 import json
 from sentence_transformers import SentenceTransformer
 import environment
 from gerador_de_respostas import GeradorDeRespostas
 from utils import FuncaoEmbeddings
-from docs_perguntas import documentos as docs
+from testes.docs_perguntas import documentos as docs
 from time import time
 import asyncio
 
-FAZER_LOG = True
+FAZER_LOG = False
 
 async def avaliar():
     print(f'Criando GeradorDeRespostas (usando {environment.MODELO_DE_EMBEDDINGS})...')
-    funcao_de_embeddings = FuncaoEmbeddings(model_name=environment.MODELO_DE_EMBEDDINGS, biblioteca=SentenceTransformer)
-    gerador_de_respostas = GeradorDeRespostas(funcao_de_embeddings=funcao_de_embeddings, url_banco_vetores=environment.URL_BANCO_VETORES)
+    funcao_de_embeddings = FuncaoEmbeddings(model_name=environment.MODELO_DE_EMBEDDINGS, biblioteca=SentenceTransformer, device=environment.DEVICE)
+    gerador_de_respostas = GeradorDeRespostas(funcao_de_embeddings=funcao_de_embeddings, url_banco_vetores=environment.URL_BANCO_VETORES, device=environment.DEVICE)
 
     print(f'Gerando lista de perguntas sintéticas')
     perguntas = []
@@ -24,12 +25,12 @@ async def avaliar():
     qtd_perguntas = len(perguntas)
     for idx in range(qtd_perguntas):
         pergunta = perguntas[idx]
-        if FAZER_LOG: print(f'Pergunta {idx+1} de {qtd_perguntas}')
+        print(f'\rPergunta {idx+1} de {qtd_perguntas}', end='')
         if FAZER_LOG: print(f'-- realizando consulta para: "{pergunta['pergunta']}"...')
 
         # Recuperando documentos usando o ChromaDB
         marcador_tempo_inicio = time()
-        documentos = await gerador_de_respostas.consultar_documentos_banco_vetores(pergunta['pergunta'])
+        documentos = await gerador_de_respostas.consultar_documentos_banco_vetores(pergunta['pergunta'], num_resultados=10)
         lista_documentos = gerador_de_respostas.formatar_lista_documentos(documentos)
         marcador_tempo_fim = time()
         tempo_consulta = marcador_tempo_fim - marcador_tempo_inicio
