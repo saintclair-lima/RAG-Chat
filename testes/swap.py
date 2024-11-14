@@ -1,7 +1,7 @@
 import json
 import pickle
 
-with open('../testes.json', 'r', encoding='utf-8') as arq:
+with open('testes_10_docs.json', 'r', encoding='utf-8') as arq:
     dados = json.load(arq)
 
 ordenacoes = []
@@ -19,5 +19,5 @@ for item in dados:
         'score_bert_multipl': [docs.index(item) for item in score_bert_multipl],
     })
 
-with open('ordenacoes.pickle', 'wb') as arq:
+with open('ordenacoes_10.pickle', 'wb') as arq:
     pickle.dump(ordenacoes, arq, pickle.HIGHEST_PROTOCOL)
