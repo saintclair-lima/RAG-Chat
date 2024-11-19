@@ -14,17 +14,24 @@ class DadosChat(BaseModel):
     contexto: list
 
 class FuncaoEmbeddings(EmbeddingFunction):
-    def __init__(self, model_name: str, biblioteca=SentenceTransformer, device: str=None):
+    def __init__(self, nome_modelo: str, tipo_modelo=SentenceTransformer, device: str=None, instrucao: str="Represente o conteúdo para responder perguntas:"):
         if device:
             self.device = device
         else:
             self.device = 'cuda' if cuda.is_available() else 'cpu'
-        
-        self.model = biblioteca(model_name, device=self.device)
+
+        # Carrega o modelo pre-treinado a partir do tipo de modelo escolhido
+        self.model = tipo_modelo(nome_modelo, device=self.device)
         self.model.to(self.device)
+        self.instrucao = instrucao
 
     def __call__(self, input: Documents) -> Embeddings:
-        embeddings = self.model.encode(input, convert_to_numpy=True, device=self.device)
+        # obtém os embeddings do texto
+        if self.instrucao:
+            input_instrucao = [(self.instrucao, doc) for doc in input]
+            embeddings = self.model.encode(input_instrucao, convert_to_numpy=True, device=self.device)
+        else:
+            embeddings = self.model.encode(input, convert_to_numpy=True, device=self.device)
         return embeddings.tolist()
     
 class ClienteOllama:
@@ -97,7 +104,7 @@ class InterfaceChroma:
             print(f'--- criando a função de embeddings do ChromaDB com {environment.MODELO_DE_EMBEDDINGS} (device={environment.DEVICE})...')
             funcao_de_embeddings = FuncaoEmbeddings(model_name=environment.MODELO_DE_EMBEDDINGS, biblioteca=SentenceTransformer, device=environment.DEVICE)
         
-        if fazer_log: print('--- inicializando banco de vetores...')
+        if fazer_log: print(f'--- inicializando banco de vetores (usando "{url_banco_vetores}")...')
         self.banco_de_vetores = chromadb.PersistentClient(path=url_banco_vetores)
 
         if fazer_log: print(f'--- definindo a coleção a ser usada ({colecao_de_documentos})...')

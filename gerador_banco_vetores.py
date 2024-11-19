@@ -1,15 +1,7 @@
 from sentence_transformers import SentenceTransformer
-from chromadb import Documents, EmbeddingFunction, Embeddings, Settings, chromadb
+from chromadb import chromadb
 import environment
-
-class FuncaoEmbeddings(EmbeddingFunction):
-    def __init__(self, biblioteca, model_name: str):
-        # Load the pre-trained Instructor model from sentence-transformers
-        self.model = biblioteca(model_name)
-    def __call__(self, input: Documents) -> Embeddings:
-        # Get the embeddings from the model
-        embeddings = self.model.encode(input, convert_to_numpy=True)
-        return embeddings.tolist()
+from utils import FuncaoEmbeddings
 
 documentos = []
 titulos = []
@@ -77,7 +69,7 @@ for k, v in environment.DOCUMENTOS.items():
 # Utilizando o ChromaDb diretamente
 persist_directory = environment.URL_BANCO_VETORES
 client = chromadb.PersistentClient(path=persist_directory)
-funcao_de_embeddings_sentence_tranformer = FuncaoEmbeddings(SentenceTransformer, model_name=environment.EMBEDDING_INSTRUCTOR)
+funcao_de_embeddings_sentence_tranformer = FuncaoEmbeddings(nome_modelo=environment.MODELO_DE_EMBEDDINGS, tipo_modelo=SentenceTransformer, device=environment.DEVICE)
 collection = client.create_collection(name='legisberto', embedding_function=funcao_de_embeddings_sentence_tranformer, metadata={'hnsw:space': 'cosine'})
 
 qtd_docs = len(documentos)
