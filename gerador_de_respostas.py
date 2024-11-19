@@ -50,7 +50,7 @@ class GeradorDeRespostas:
                 'id': documentos['ids'][0][idx],
                  'score_distancia': 1 - documentos['distances'][0][idx], # Distância do cosseno vaia entre 1 e 0
                  'metadados': documentos['metadatas'][0][idx],
-                 'conteudo': f"{documentos['metadatas'][0][idx]['titulo']} - {documentos['documents'][0][idx]}"
+                 'conteudo': f"{documentos['documents'][0][idx]}"
             }
             for idx in range(len(documentos['ids'][0]))]
 
@@ -154,10 +154,11 @@ class GeradorDeRespostas:
         if fazer_log: print(f'--- gerando resposta com o Llama')
         marcador_tempo_inicio = time()
         texto_resposta_llama = ''
-        flag_tempo_resposta = False     
+        flag_tempo_resposta = False
         async for item in self.interface_ollama.gerar_resposta_llama(
                     pergunta=pergunta,
-                    documentos=documentos['documents'][0],
+                    # Inclui o título dos documentos no prompt do Llama
+                    documentos=[f'{doc[0]['titulo']} - {doc[1]}' for doc in zip(documentos['metadatas'][0], documentos['documents'][0])],
                     contexto=contexto):
             
             texto_resposta_llama += item['response']
