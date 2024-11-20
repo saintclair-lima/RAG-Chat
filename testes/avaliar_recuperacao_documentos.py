@@ -11,7 +11,7 @@ import asyncio
 
 FAZER_LOG = False
 
-async def avaliar():
+async def avaliar_recuperacao_documentos():
     print(f'Criando GeradorDeRespostas (usando {environment.MODELO_DE_EMBEDDINGS})...')
     funcao_de_embeddings = FuncaoEmbeddings(nome_modelo=environment.MODELO_DE_EMBEDDINGS, tipo_modelo=SentenceTransformer, device=environment.DEVICE)
     gerador_de_respostas = GeradorDeRespostas(funcao_de_embeddings=funcao_de_embeddings, url_banco_vetores=environment.URL_BANCO_VETORES, device=environment.DEVICE)
@@ -69,4 +69,4 @@ async def avaliar():
 
 # Run the `avaliar` function
 if __name__ == "__main__":
-    asyncio.run(avaliar())
+    asyncio.run(avaliar_recuperacao_documentos())
