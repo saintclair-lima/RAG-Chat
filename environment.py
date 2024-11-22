@@ -27,7 +27,7 @@ DOCUMENTOS =  {
         'url': 'datasets/regimento_al.txt',
         'titulo': 'Regimento Interno - ALRN',
         'autor': 'Assembleia Legislativa do Rio Grande do Norte - ALERN',
-        'fonte': 'https://www.google.com/url?q=https%3A%2F%2Fwww.al.rn.leg.br%2Fregimento-interno%2FRegimento_Interno_ALRN_junho_2024_DL.pdf'
+        'fonte': 'https://www.al.rn.leg.br/regimento-interno/Regimento_Interno_ALRN_junho_2024_DL.pdf'
     },
     'res_auxilio_saude_alrn' : {
         'url': 'datasets/res_auxilio_saude_alrn.txt',
