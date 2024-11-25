@@ -1,15 +1,18 @@
+## print('Para simplicidade, mover o arquivo para a pasta principal para executar')
+print('Importando bibliotecas')
 import json
+from time import time
 from sentence_transformers import SentenceTransformer
 from chromadb import chromadb
 import environment
 from utils import FuncaoEmbeddings, InterfaceOllama
 import asyncio
 
-FAZER_LOG = True
+FAZER_LOG = False
 
 async def avaliar_respostas_llama(url_arq_perg_docs):
     if FAZER_LOG: print('Carregando JSON')
-    with open(url_arq_perg_docs, 'r') as arq:
+    with open(url_arq_perg_docs, 'r', encoding='utf-8') as arq:
         dados = json.load(arq)
     if FAZER_LOG: print('Criando interface Ollama')
     interface_ollama = InterfaceOllama(url_llama=environment.URL_LLAMA, nome_modelo=environment.MODELO_LLAMA)
@@ -25,8 +28,12 @@ async def avaliar_respostas_llama(url_arq_perg_docs):
     if FAZER_LOG: print('Processando perguntas')
     num_itens = len(dados)
     for idx in range(num_itens):
-        print(f'\rPergunta {idx+1} de {num_itens}')
+        print(f'\rPergunta {idx+1} de {num_itens}', end="")
         item = dados[idx]
+
+        # Ignora Cada item que já tem uma resposta do llama
+        if 'llama' in item: continue
+
         pergunta = item['pergunta']
         if FAZER_LOG: print('Recuperando documentos')
         documentos = collection.get(
@@ -46,18 +53,12 @@ async def avaliar_respostas_llama(url_arq_perg_docs):
         resp_llama['context'] = []
 
         item['llama'] = resp_llama
-    if FAZER_LOG: print('salvando json')
-    with open('testes_llama_10_docs.json', 'w', encoding='utf-8') as arq:
-        arq.write(json.dumps(dados, ensure_ascii=False, indent=4))
+
+        if FAZER_LOG: print('salvando json')
+        with open('./testes/testes_llama_10_docs.json', 'w', encoding='utf-8') as arq:
+            arq.write(json.dumps(dados, ensure_ascii=False, indent=4))
 
 if __name__ == '__main__':
-    asyncio.run(avaliar_respostas_llama('./testes/testes_10_docs.json'))
-
-
-
-
-
-
-prompt_usuario = 'DOCUMENTOS:\n{}\nPERGUNTA: {}'.format('\n'.join(documentos), pergunta)
-
-f'<s>[INST]<<SYS>>\n{definicoes_sistema}\n<</SYS>>\n{prompt_usuario}[/INST]'
+    asyncio.run(avaliar_respostas_llama('./testes/testes_llama_10_docs.json'))
+else:
+    avaliar_respostas_llama('./testes/testes_llama_10_docs.json')
