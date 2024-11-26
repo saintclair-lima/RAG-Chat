@@ -55,4 +55,7 @@ async def favicon(): return FileResponse('assets/img/favicon/site.webmanifest')
 @app.get('/assets/img/Legisberto.png')
 async def legisberto(): return FileResponse('assets/img/Legisberto.png')
 
+@app.get('/assets/img/logo_al.png')
+async def legisberto(): return FileResponse('assets/img/logo_al.png')
+
 print('API inicializada')
