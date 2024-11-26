@@ -10,57 +10,82 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Legisberto</title>
     <style>
-        body {
+        body{
             margin: 0;
-            height: 100vh;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
-            background-color: #f0f0f0;
+            background-color: #f6f6f6;
             font-family: Arial, sans-serif;
         }
-        .container-conteudo {
+        .cabecalho{
+            width: 100%;
+            background-color: #163C70;
+        }
+        .titulo{
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            color: white;
+            font-family: 'Montserrat', sans-serif;
+        }
+        .logo{
+            padding-right: 15px;
+            align-self: center;
+        }
+        .logo img{
+            height: 40px;
+        }
+        .rotulo-titulo h1{
+            padding-left: 15px;
+            align-self: center;
+            border-left: 1px solid white;
+            font-size: 28px;
+        }
+        .container-conteudo{
             width: 50%;
             min-width: 300px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
             height: 80%;
-            border: 1px solid #ccc;
+            margin-top: 20px;
             background-color: #fff;
-            padding: 20px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 5px;
         }
-
-        @media (max-width: 414px) {
-            body {
-                margin: 0;
-                max-height: 90vh;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                background-color: #f0f0f0;
-                font-family: Arial, sans-serif;
-            }
-            .container-conteudo {
-                width: 100%;
-                height: 85vh;
-                border: none;
-                box-shadow: none;
-                padding: 10px;
-            }
-            .div-cabecalho {
-                margin-top: 10px;
-                background: rgb(92, 107, 151);
-                background: linear-gradient(90deg, rgb(92, 107, 151) 24%, rgb(38, 64, 143) 84%);
-                margin-bottom: 10px;
-                display: flex;
-                align-items: center;
-            }
+        .nome-bot{
+            /* background: rgb(10, 61, 98); */
+            background: white;
+            display: flex;
+            align-items: center;
+            border-top-left-radius: 5px;
+            border-top-right-radius: 5px;
+            padding: 5px;
         }
-        .container-exibicao-mensagens {
+        .img-legisberto{
+            margin: 10px;
+            height: 40px;
+            border-radius: 50%;
+            border-style: solid;
+            border-width: 2px;
+            /* border-color: rgb(255, 255, 255); */
+            border-color:  rgb(10, 61, 98);;
+            /* box-shadow:  0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19); */
+        }
+        .rotulo-legisberto{
+            margin-left: 10px;
+            font-size: 22px;
+            font-family: Verdana, Geneva, Tahoma, sans-serif;
+            /* color: white; */
+            color: rgb(10, 61, 98);
+        }
+        .wrapper-container-exibicao-mensagens{
+            padding: 0px 5px;
+        }
+        .container-exibicao-mensagens{
             flex: 1;
-            border: 1px solid #ccc;
             margin-bottom: 20px;
             padding: 10px;
             overflow: auto;
@@ -69,8 +94,9 @@
             display: flex;
             flex-direction: column;
             align-items: flex-start;
+            box-shadow: inset 0px 6px 3px #bbb;;
         }
-        .text-box {
+        .text-box{
             width: 75%;
             padding: 10px;
             margin-bottom: 10px;
@@ -82,73 +108,27 @@
             box-shadow: 1px 1px 2px rgb(0, 0, 0, 0.1);
             justify-content:space-between;
         }
-        .align-left {
+        .align-left{
             align-self: flex-start;
         }
-        .align-right {
+        .align-right{
             align-self: flex-end;
         }
-        .div-cabecalho {
-            background: rgb(92, 107, 151);
-            background: linear-gradient(90deg, rgb(92, 107, 151) 24%, rgb(38, 64, 143) 84%);
-            margin-bottom: 10px;
-            display: flex;
-            align-items: center;
-        }
-        .img-legisberto {
-            margin: 5px;
-            height: 70px;
-            border-radius: 50%;
-            border-style: solid;
-            border-width: 2px;
-            border-color: rgb(255, 255, 255);
-            box-shadow:  0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-        }
-        .rotulo-legisberto {
-            margin-left: 30px;
-            font-size: 30px;
-            font-family: Verdana, Geneva, Tahoma, sans-serif;
-            font-weight: bold;
-            color: white;
-        }
-        .mensagem-enviada {
+        .mensagem-enviada{
             align-self: flex-end;
             background-color: rgb(38, 64, 143);
             color: white;
         }
-        /* .mensagem-enviada:after {
-            content: "";
-            width: 0px;
-            height: 0px;
-            position: relative;
-            border-left: 10px solid red;
-            border-right: 10px solid transparent;
-            border-top: 10px solid red;
-            border-bottom: 10px solid transparent;
-            top: 0px;
-        } */
-        .mensagem-recebida {
+        .mensagem-recebida{
             align-self: flex-start;
             background-color: white;
         }
-        /* .mensagem-recebida:before {
-            content: "";
-            width: 0px;
-            height: 0px;
-            position: relative;
-            border-right: 10px solid rgb(222, 230, 255);
-            border-left: 10px solid transparent;
-            border-top: 10px solid rgb(222, 230, 255);
-            border-bottom: 10px solid transparent;
-            left: -20px;
-            top: 0px;
-        } */
-        .container-envio-mensagens {
+        .container-envio-mensagens{
             display: flex;
             flex-direction: row;
             justify-content:space-between;
         }
-        #text-input {
+        #text-input{
             width:100%;
             height: 37px;
             margin-bottom: 10px;
@@ -157,11 +137,11 @@
             border-radius: 4px;
             padding-left: 10px;
         }
-        #text-input:disabled {
+        #text-input:disabled{
             background-color: #ccc;
         }
 
-        #botao-enviar {
+        #botao-enviar{
             width: 80px;
             height: 41px;
             border: none;
@@ -170,53 +150,99 @@
             color: #fff;
             cursor: pointer;
         }
-        #botao-enviar:hover {
+        #botao-enviar:hover{
             background-color: rgb(27, 44, 97);
         }
-        #botao-enviar:disabled:hover {
+        #botao-enviar:disabled:hover{
             background-color: #9e9c9c;
             color: #616161;
         }
-        #botao-enviar:disabled {
+        #botao-enviar:disabled{
             background-color: #9e9c9c;
             color: #616161;
             cursor:default;
         }
+        @media (max-width: 414px){
+            .titulo{
+                flex-direction: column;
+                align-items: center;
+                margin-top: 10px;
+            }
+            .container-conteudo{
+                width: 100%;
+                height: 85vh;
+                border: none;
+                box-shadow: none;
+                padding: 10px;
+            }
+            .logo{
+                padding-right: 15px;
+                align-self: center;
+            }
+            .logo img{
+                height: 30px;
+            }
+            .rotulo-titulo h1{
+                border-left: 0px;
+                font-size: 20px;
+                padding: 0px;
+                margin: .3em;
+            }
+            .nome-bot{
+                margin-bottom: 10px;
+                display: flex;
+                align-items: center;
+            }
+        }
     </style>
 
     <style>
-        @keyframes dot-blink1 { 0%, 25% {opacity: 0;} 26%, 50% {opacity: 1;} 51%, 75% {opacity: 1;} 76%, 100% {opacity: 1;} }
-        @keyframes dot-blink2 { 0%, 25% {opacity: 0;} 26%, 50% {opacity: 0;} 51%, 75% {opacity: 1;} 76%, 100% {opacity: 1;} }
-        @keyframes dot-blink3 { 0%, 25% {opacity: 0;} 26%, 50% {opacity: 0;} 51%, 75% {opacity: 0;} 76%, 100% {opacity: 1;} }
-        .dots {font-weight: bolder; font-size: large;}
-        .dot1 {animation: dot-blink1 2s infinite;}
-        .dot2 {animation: dot-blink2 2s infinite;}
-        .dot3 {animation: dot-blink3 2s infinite;}
+        @keyframes dot-blink1{ 0%, 25%{opacity: 0;} 26%, 50%{opacity: 1;} 51%, 75%{opacity: 1;} 76%, 100%{opacity: 1;} }
+        @keyframes dot-blink2{ 0%, 25%{opacity: 0;} 26%, 50%{opacity: 0;} 51%, 75%{opacity: 1;} 76%, 100%{opacity: 1;} }
+        @keyframes dot-blink3{ 0%, 25%{opacity: 0;} 26%, 50%{opacity: 0;} 51%, 75%{opacity: 0;} 76%, 100%{opacity: 1;} }
+        .dots{font-weight: bolder; font-size: large;}
+        .dot1{animation: dot-blink1 2s infinite;}
+        .dot2{animation: dot-blink2 2s infinite;}
+        .dot3{animation: dot-blink3 2s infinite;}
     </style>
 </head>
 <body>
+    
+    <div class="cabecalho">
+        <div class="titulo">
+            <div class="logo"><img src="/assets/img/logo_al.png"></div>
+            <div class="rotulo-titulo"><h1>Z-Legis</h1></div>
+        </div>
+    </div>
+
     <div class="container-conteudo">
-        <div class="div-cabecalho">
-            <img src="/assets/img/Legisberto.png" class="img-legisberto">
+
+
+        <div class="nome-bot">
+            <img class="img-legisberto" src="/assets/img/Legisberto.png">
             <span class="rotulo-legisberto">Legisberto</span>
         </div>
-        <div class="container-exibicao-mensagens" id="container-exibicao-mensagens">
-            <!-- Divs das mensagens serão adicionadas aqui -->
-             <div class="text-box mensagem-recebida">
-                <p>Oi! 😊</p>
-                <p>Eu sou Legisberto, um assistente de busca de conteúdo em documentos normativos da ALRN.</p>
-                <p>Posso responder perguntas sobre o Regimento Interno da ALRN e resoluções que tratam do Auxílio de Assistência à Saúde, 
-                    da Base de Cálculo de Férias e Décimo Terceiro, da Avaliação de Desempenho de Estágio Probatório, do Plano de Cargos e Carreira 
-                    e da Substituição de Férias de Cargos Comissionados ou Funções Gratificadas.</p>
-                <p>Para facilitar, peço a gentileza de fazer perguntas detalhadas e específicas. Farei o possível para encontrar a resposta.</p>
-                <p>Tenha em mente que, como estou em fase de testes, é possível que minhas respostas tenham algumas incorreções. 
-                    É importante verificar os documentos normativos diretamente, em caso de dúvida.</p>
-             </div>
+
+
+        <div class="wrapper-container-exibicao-mensagens">
+            <div class="container-exibicao-mensagens" id="container-exibicao-mensagens">
+                <!-- Divs das mensagens serão adicionadas aqui -->
+                 <div class="text-box mensagem-recebida">
+                    <p>Oi! 😊</p>
+                    <p>Eu sou Legisberto, um assistente de busca de conteúdo em documentos normativos da ALRN.</p>
+                    <p>Posso responder perguntas sobre o Regimento Interno da ALRN e resoluções que tratam do Auxílio de Assistência à Saúde, 
+                        da Base de Cálculo de Férias e Décimo Terceiro, da Avaliação de Desempenho de Estágio Probatório, do Plano de Cargos e Carreira 
+                        e da Substituição de Férias de Cargos Comissionados ou Funções Gratificadas.</p>
+                    <p>Para facilitar, peço a gentileza de fazer perguntas detalhadas e específicas. Farei o possível para encontrar a resposta.</p>
+                    <p>Tenha em mente que, como estou em fase de testes, é possível que minhas respostas tenham algumas incorreções. 
+                        É importante verificar os documentos normativos diretamente, em caso de dúvida.</p>
+                 </div>
+            </div>
+            <form class="container-envio-mensagens" id="container-envio-mensagens">
+                <input type="text" id="text-input" placeholder="Digite sua pergunta" required="required" oninvalid="setCustomValidity('Escreva uma pergunta')" autofocus>
+                <button onclick="submitText()" id="botao-enviar">Enviar</button>
+            </form>
         </div>
-        <form class="container-envio-mensagens" id="container-envio-mensagens">
-            <input type="text" id="text-input" placeholder="Digite sua pergunta" required="required" oninvalid="setCustomValidity('Escreva uma pergunta')" autofocus>
-            <button onclick="submitText()" id="botao-enviar">Enviar</button>
-        </form>
     </div>
 
     <script>
@@ -224,13 +250,13 @@
 
         function formatarResposta(dados_resposta){
             var textoResposta = 
-                dados_resposta.resposta.split('\n').map((linha) => {
+                dados_resposta.resposta.split('\n').map((linha) =>{
                     return `<p>${linha}</p>\n`
                 }).join('\n') + 
 
                 "<hr>\n<p><b>Fontes</b></p>\n<div style='font-size: smaller;font-style: italic;'>\n" + 
 
-                dados_resposta.documentos.map((documento) => {
+                dados_resposta.documentos.map((documento) =>{
                     return `<p><b>${documento.metadados.titulo}</b><br>${documento.conteudo}</p>`
                 }).join("\n") + 
                 
@@ -238,7 +264,7 @@
             return textoResposta;
         }
 
-        function rolagemAutomatica() {
+        function rolagemAutomatica(){
             containerMensagens = document.getElementById("container-exibicao-mensagens");
             const novaMensagem = containerMensagens.lastElementChild;
             const posicaoMargemInferiorContainer = containerMensagens.getBoundingClientRect()['y'] + containerMensagens.getBoundingClientRect()["height"];
@@ -246,12 +272,12 @@
 
             // se a margem inferior da mensagem estiver acima da margem inferior do container,
             // faz a rolagem automática
-            if (posicaoMargemInferiorNovaMensagem <= (posicaoMargemInferiorContainer + 20)) {
+            if (posicaoMargemInferiorNovaMensagem <= (posicaoMargemInferiorContainer + 20)){
                 containerMensagens.scrollTop = containerMensagens.scrollHeight;
             }
         }
 
-        async function submitText() {
+        async function submitText(){
             // Só executa se houver valor digitado no campo de pergunta
             if (document.getElementById("text-input").value){
                 document.getElementById("botao-enviar").disabled = true;
@@ -275,13 +301,13 @@
                 // rola a página até o início da nova mensagem
                 document.getElementById("container-exibicao-mensagens").scrollTop = document.getElementById("container-exibicao-mensagens").scrollHeight;
 
-                const response = await fetch("TAG_INSERCAO_URL_HOST/chat/enviar_pergunta/", {
+                const response = await fetch("TAG_INSERCAO_URL_HOST/chat/enviar_pergunta/",{
                     method: "POST",
                     body: JSON.stringify({
                         pergunta: input,
                         contexto: contexto,
                     }),
-                    headers: {
+                    headers:{
                         "Content-type": "application/json; charset=UTF-8"
                     }
                     });
@@ -291,11 +317,11 @@
                 let recebeuFlagFimMensagem = false;
                 let textoAcumulado = "<p>";
 
-                while (true) {
+                while (true){
                     rolagemAutomatica();
-                    const { done, value } = await reader.read();
+                    const{ done, value } = await reader.read();
                     if (done) break;
-                    const fragmento_resposta = decoder.decode(value, { stream: true });
+                    const fragmento_resposta = decoder.decode(value,{ stream: true });
                     textoAcumulado += fragmento_resposta;
 
                     if (fragmento_resposta.includes("TAG_INSERCAO_FLAG_ENCERRAMENTO_MENSAGEM")){
@@ -306,8 +332,8 @@
                         divResposta.innerHTML = textoAcumulado.split("TAG_INSERCAO_FLAG_ENCERRAMENTO_MENSAGEM")[0].replaceAll("\n", "</p><p>");
                     }
 
-                    if (recebeuFlagFimMensagem) {
-                        try {
+                    if (recebeuFlagFimMensagem){
+                        try{
                             var dados_resposta = JSON.parse(textoAcumulado.split("TAG_INSERCAO_FLAG_ENCERRAMENTO_MENSAGEM")[1]);
                             // AFAZER: Considerar se realmente mantém ordenação por score_ponderado
                             dados_resposta.documentos = dados_resposta.documentos
@@ -319,7 +345,7 @@
                             divResposta.innerHTML = formatarResposta(dados_resposta);
                             contexto = dados_resposta.resposta_llama.context;
                             console.log(dados_resposta)
-                        } catch (erro) {
+                        } catch (erro){
                             // sempre executa no final da geração da resposta e antes da obtenção dos metadados gerados
                             // console.log(erro);
                         }
