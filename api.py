@@ -52,8 +52,8 @@ async def favicon(): return FileResponse('assets/img/favicon/apple-touch-icon.pn
 @app.get('/assets/img/favicon/site.webmanifest')
 async def favicon(): return FileResponse('assets/img/favicon/site.webmanifest')
 
-@app.get('/assets/img/Legisberto.png')
-async def legisberto(): return FileResponse('assets/img/Legisberto.png')
+@app.get('/assets/img/Assistente.png')
+async def legisberto(): return FileResponse('assets/img/Assistente.png')
 
 @app.get('/assets/img/logo_al.png')
 async def legisberto(): return FileResponse('assets/img/logo_al.png')
