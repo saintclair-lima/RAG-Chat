@@ -1,0 +1,14 @@
+{
+    "nome": "banco_vetores_regimento_resolucoes_rh",
+    "colecoes": [
+        {
+            "nome": "regimento_resolucoes_rh",
+            "instrução": "Represent the legislative document for retrieval:",
+            "quantidade_max_palavras_por_documento": 300,
+            "funcao_embeddings": {
+                "nome_modelo": "hkunlp/instructor-xl",
+                "tipo_modelo": "SentenceTransformer"
+            }
+        }
+    ]
+}
