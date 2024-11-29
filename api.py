@@ -31,7 +31,7 @@ async def gerar_resposta(dadosRecebidos: DadosChat):
 
 @app.get('/chat/')
 async def pagina_chat():
-    with open('chat.html', 'r', encoding='utf-8') as arquivo: conteudo_html = arquivo.read()
+    with open('assets/chat.html', 'r', encoding='utf-8') as arquivo: conteudo_html = arquivo.read()
     # substituindo as tags dentro do HTML, para maior controle
     for tag, valor in environment.TAGS_SUBSTITUICAO_HTML.items():
         conteudo_html = conteudo_html.replace(tag, valor)
