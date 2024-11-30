@@ -1,6 +1,6 @@
 import requests
 import json
-import environment
+import api.environment.environment as environment
 url = 'http://localhost:11434/api/generate'
 def gerar_perguntas(artigo, contexto):
     prompt = '''Considere o artigo abaixo. Crie pelo menos 5 perguntas que possam ser respondidas com fragmentos do artigo. A saída deve ser uma lista de objetos JSON, com os atributos {{"pergunta": "Texto da pergunta Gerada", "resposta": "fragmento do artigo que responde a pergunta"}}. Não adicione nada na resposta, exceto a lista de objetos JSON, sem qualquer comentário adicional. ARTIGO: {}'''.format(artigo)

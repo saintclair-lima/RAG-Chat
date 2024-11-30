@@ -4,8 +4,8 @@ import json
 from time import time
 from sentence_transformers import SentenceTransformer
 from chromadb import chromadb
-import environment
-from utils import FuncaoEmbeddings, InterfaceOllama
+import api.environment.environment as environment
+from utils.utils import FuncaoEmbeddings, InterfaceOllama
 import asyncio
 
 FAZER_LOG = False

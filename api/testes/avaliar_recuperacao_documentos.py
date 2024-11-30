@@ -2,9 +2,9 @@
 print('Importando bibliotecas...')
 import json
 from sentence_transformers import SentenceTransformer
-import environment
+import api.environment.environment as environment
 from gerador_de_respostas import GeradorDeRespostas
-from utils import FuncaoEmbeddings
+from utils.utils import FuncaoEmbeddings
 from testes.docs_perguntas import documentos as docs
 from time import time
 import asyncio

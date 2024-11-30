@@ -1,7 +1,7 @@
 from sentence_transformers import SentenceTransformer
 from chromadb import chromadb
-from .. import environment
-from utils import FuncaoEmbeddings
+from environment.environment import environment
+from utils.utils import FuncaoEmbeddings
 
 class GeradorBancoVetores:
     def run(self):

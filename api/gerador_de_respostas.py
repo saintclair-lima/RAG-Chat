@@ -7,8 +7,8 @@ from time import time
 from transformers import BertTokenizer, BertForQuestionAnswering, pipeline
 from typing import Callable, Generator
 
-import environment
-from utils import InterfaceChroma, InterfaceOllama, DadosChat
+from environment.environment import environment
+from utils.utils import InterfaceChroma, InterfaceOllama, DadosChat
     
 
 class GeradorDeRespostas:
@@ -158,7 +158,7 @@ class GeradorDeRespostas:
         async for item in self.interface_ollama.gerar_resposta_llama(
                     pergunta=pergunta,
                     # Inclui o título dos documentos no prompt do Llama
-                    documentos=[f'{doc[0]['titulo']} - {doc[1]}' for doc in zip(documentos['metadatas'][0], documentos['documents'][0])],
+                    documentos=[f"{doc[0]['titulo']} - {doc[1]}" for doc in zip(documentos['metadatas'][0], documentos['documents'][0])],
                     contexto=contexto):
             
             texto_resposta_llama += item['response']

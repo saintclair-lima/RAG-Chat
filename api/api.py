@@ -4,9 +4,9 @@ from fastapi.responses import FileResponse, HTMLResponse, StreamingResponse
 from sentence_transformers import SentenceTransformer
 from starlette.middleware.cors import CORSMiddleware
 
-import environment
+from environment.environment import environment
 from gerador_de_respostas import GeradorDeRespostas, DadosChat
-from utils import FuncaoEmbeddings
+from utils.utils import FuncaoEmbeddings
 
 print('Instanciando a api (FastAPI)...')
 app = FastAPI()
