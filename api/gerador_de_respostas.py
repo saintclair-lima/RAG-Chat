@@ -7,8 +7,8 @@ from time import time
 from transformers import BertTokenizer, BertForQuestionAnswering, pipeline
 from typing import Callable, Generator
 
-from environment.environment import environment
-from utils.utils import InterfaceChroma, InterfaceOllama, DadosChat
+from api.environment.environment import environment
+from api.utils.utils import InterfaceChroma, InterfaceOllama, DadosChat
     
 
 class GeradorDeRespostas:

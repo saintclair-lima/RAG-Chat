@@ -163,7 +163,8 @@ No caso da versão 12.4 do CUDA, é necessaário alterar para:
 pip install -r requirements.txt
 ```
 ### Iniciando o projeto
+Na pasta raiz do projeto, executar:
 ```
-uvicorn api:app --reload
+uvicorn api.api:app --reload
 
 ```

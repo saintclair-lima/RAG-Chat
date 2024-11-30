@@ -5,7 +5,7 @@ from torch import cuda
 
 import httpx
 import json
-from environment.environment import environment
+from api.environment.environment import environment
 from typing import List
 
 
