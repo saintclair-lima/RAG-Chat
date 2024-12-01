@@ -79,12 +79,13 @@ class GeradorPerguntas:
         print(f'Gerando perguntas para {qtd_docs} documentos')
         for idx in range(qtd_docs):
             print(f'\rProcessando documento {idx+1} de {qtd_docs}', end='')
-            doc = documentos[idx]    
-            perguntas = self.gerar_perguntas(artigo=doc['page_content'], contexto=[])
-            doc['perguntas'] = perguntas
-            
-            with open(url_arquivo_saida, 'w', encoding='utf-8') as arq:
-                arq.write(json.dumps(documentos, indent=4, ensure_ascii=False))
+            doc = documentos[idx]
+            if 'perguntas' not in doc:
+                perguntas = self.gerar_perguntas(artigo=doc['page_content'], contexto=[])
+                doc['perguntas'] = perguntas
+                
+                with open(url_arquivo_saida, 'w', encoding='utf-8') as arq:
+                    arq.write(json.dumps(documentos, indent=4, ensure_ascii=False))
                 
 if __name__ == "__main__":
     print('Iniciando gerador de perguntas')
