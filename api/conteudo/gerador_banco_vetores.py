@@ -1,6 +1,7 @@
 import os
 from ..environment.environment import environment
 from ..utils.utils import FuncaoEmbeddings
+from torch import cuda
 
 from sentence_transformers import SentenceTransformer
 from chromadb import chromadb
@@ -10,7 +11,7 @@ COMPRIMENTO_MAX_FRAGMENTO = 300
 EMBEDDING_INSTRUCTOR="hkunlp/instructor-xl"
 URL_BANCO_VETORES=os.path.join(URL_LOCAL,"bancos_vetores/banco_vetores_regimento_resolucoes_rh_300")
 NOME_COLECAO='regimento_resolucoes_rh'
-DEVICE='cuda'
+DEVICE='cuda' if cuda.is_available() else 'cpu'
 
 class GeradorBancoVetores:
     def run(self):

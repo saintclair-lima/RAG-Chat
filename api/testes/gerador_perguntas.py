@@ -3,6 +3,7 @@ import chromadb
 import requests
 import json
 import sys
+from torch import cuda
 
 from sentence_transformers import SentenceTransformer
 
@@ -14,7 +15,7 @@ URL_LOCAL = os.path.abspath(os.path.join(os.path.dirname(__file__), "../conteudo
 EMBEDDING_INSTRUCTOR="hkunlp/instructor-xl"
 URL_BANCO_VETORES=os.path.join(URL_LOCAL,"bancos_vetores/banco_vetores_regimento_resolucoes_rh")
 NOME_COLECAO='regimento_resolucoes_rh'
-DEVICE='cuda'
+DEVICE='cuda' if cuda.is_available() else 'cpu'
 
 class GeradorPerguntas:
     def __init__(self,
@@ -54,7 +55,7 @@ class GeradorPerguntas:
         if carregar_arquivo:
             print(f'Carregando {url_arquivo_saida}')
             with open(url_arquivo_saida, 'r', encoding='utf-8') as arq:
-                documentos = json.load(documentos)
+                documentos = json.load(arq)
         else:
             print(f'Consultando documentos do banco de vetores')
             client = chromadb.PersistentClient(path=self.URL_BANCO_VETORES)
