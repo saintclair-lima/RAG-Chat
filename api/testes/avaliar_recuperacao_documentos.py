@@ -2,31 +2,45 @@
 print('Importando bibliotecas...')
 import json
 from sentence_transformers import SentenceTransformer
-import api.environment.environment as environment
-from gerador_de_respostas import GeradorDeRespostas
-from utils.utils import FuncaoEmbeddings
-from testes.docs_perguntas import documentos as docs
+from ..environment.environment import environment
+from ..gerador_de_respostas import GeradorDeRespostas
+from ..utils.utils import FuncaoEmbeddings
+#from documentos_perguntas import documentos_perguntas as docs
 from time import time
 import asyncio
+import os
+from torch import cuda
+
+URL_LOCAL = os.path.abspath(os.path.join(os.path.dirname(__file__), "./"))
+EMBEDDING_INSTRUCTOR="hkunlp/instructor-xl"
+URL_BANCO_VETORES=os.path.join(URL_LOCAL,"../conteudo/bancos_vetores/banco_vetores_regimento_resolucoes_rh")
+NOME_COLECAO='regimento_resolucoes_rh'
+DEVICE='cuda' if cuda.is_available() else 'cpu'
 
 FAZER_LOG = False
 
 async def avaliar_recuperacao_documentos():
-    print(f'Criando GeradorDeRespostas (usando {environment.MODELO_DE_EMBEDDINGS})...')
-    funcao_de_embeddings = FuncaoEmbeddings(nome_modelo=environment.MODELO_DE_EMBEDDINGS, tipo_modelo=SentenceTransformer, device=environment.DEVICE)
-    gerador_de_respostas = GeradorDeRespostas(funcao_de_embeddings=funcao_de_embeddings, url_banco_vetores=environment.URL_BANCO_VETORES, device=environment.DEVICE)
+    print(f'Criando GeradorDeRespostas (usando {EMBEDDING_INSTRUCTOR})...')
+    funcao_de_embeddings = FuncaoEmbeddings(nome_modelo=EMBEDDING_INSTRUCTOR, tipo_modelo=SentenceTransformer, device=DEVICE)
+    gerador_de_respostas = GeradorDeRespostas(funcao_de_embeddings=funcao_de_embeddings, url_banco_vetores=URL_BANCO_VETORES, colecao_de_documentos=NOME_COLECAO, device=DEVICE)
 
+    with open(os.path.join(URL_LOCAL,'documentos_perguntas.json'), 'r') as arq:
+        docs = json.load(arq)
+    
     print(f'Gerando lista de perguntas sintéticas')
     perguntas = []
     for item in docs:
         for pergunta in item['perguntas']:
-            if pergunta['resposta'] != '': perguntas.append({'id': item['id'], 'titulo': item['metadata']['titulo'], 'subtitulo': item['metadata']['subtitulo'], 'pergunta': pergunta['pergunta'], 'resposta': pergunta['resposta']})
+            try:
+                if pergunta['resposta'] != '': perguntas.append({'id': item['id'], 'titulo': item['metadata']['titulo'], 'subtitulo': item['metadata']['subtitulo'], 'pergunta': pergunta['pergunta'], 'resposta': pergunta['resposta']})
+            except:
+                print(pergunta)
 
     qtd_perguntas = len(perguntas)
     for idx in range(qtd_perguntas):
         pergunta = perguntas[idx]
         print(f'\rPergunta {idx+1} de {qtd_perguntas}', end='')
-        if FAZER_LOG: print(f'-- realizando consulta para: "{pergunta['pergunta']}"...')
+        if FAZER_LOG: print(f'''-- realizando consulta para: "{pergunta['pergunta']}"...''')
 
         # Recuperando documentos usando o ChromaDB
         marcador_tempo_inicio = time()
@@ -62,7 +76,7 @@ async def avaliar_recuperacao_documentos():
             })
 
 
-    with open('testes.json', 'w', encoding='utf-8') as arq:
+    with open('testes_avaliar_documentos.json', 'w', encoding='utf-8') as arq:
         arq.write(json.dumps(perguntas, indent=4, ensure_ascii=False))
 
 
