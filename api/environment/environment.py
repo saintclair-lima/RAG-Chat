@@ -1,6 +1,9 @@
 import os
 from dotenv import load_dotenv
-load_dotenv()
+
+url_raiz_projeto = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+url_dotenv = os.path.join(url_raiz_projeto, ".env")
+load_dotenv(url_dotenv)
 
 class Environment:
     def __init__(self):

@@ -1,7 +1,16 @@
+import os
+from ..environment.environment import environment
+from ..utils.utils import FuncaoEmbeddings
+
 from sentence_transformers import SentenceTransformer
 from chromadb import chromadb
-from api.environment.environment import environment
-from api.utils.utils import FuncaoEmbeddings
+
+URL_LOCAL = os.path.abspath(os.path.join(os.path.dirname(__file__), "./"))
+COMPRIMENTO_MAX_FRAGMENTO = 300
+EMBEDDING_INSTRUCTOR="hkunlp/instructor-xl"
+URL_BANCO_VETORES=os.path.join(URL_LOCAL,"bancos_vetores/bancos_vetores_regimento_resolucoes_rh_300")
+NOME_COLECAO='regimento_resolucoes_rh'
+DEVICE='cpu'
 
 class GeradorBancoVetores:
     def run(self):
@@ -10,7 +19,7 @@ class GeradorBancoVetores:
         id=1
 
         for k, v in environment.DOCUMENTOS.items():
-            URL_DADOS = './' + v['url']
+            URL_DADOS = os.path.join(URL_LOCAL, v['url'])
             print(f'''Lendo o arquivo {URL_DADOS}...''')
             with open(URL_DADOS, 'r', encoding='UTF-8') as arq:
                 texto = arq.read()
@@ -29,7 +38,7 @@ class GeradorBancoVetores:
             for art in texto:
                 item = art.split(' ')
                 qtd_palavras = len(item)
-                if qtd_palavras > 500:
+                if qtd_palavras > COMPRIMENTO_MAX_FRAGMENTO:
                     item = (
                         art.replace('. §', '.\n§')
                         .replace('; §', ';\n§')
@@ -43,7 +52,7 @@ class GeradorBancoVetores:
                     caput = item[0]
                     fragmento_artigo = '' + caput
                     for i in range(1, len(item)):
-                        if len(fragmento_artigo.split(' ')) + len(item[i]) <= 500:
+                        if len(fragmento_artigo.split(' ')) + len(item[i]) <= COMPRIMENTO_MAX_FRAGMENTO:
                             fragmento_artigo = fragmento_artigo + ' ' + item[i]
                         else:
                             artigos.append(fragmento_artigo)
@@ -69,10 +78,10 @@ class GeradorBancoVetores:
                 id += 1
 
         # Utilizando o ChromaDb diretamente
-        persist_directory = environment.URL_BANCO_VETORES
+        persist_directory = URL_BANCO_VETORES
         client = chromadb.PersistentClient(path=persist_directory)
-        funcao_de_embeddings_sentence_tranformer = FuncaoEmbeddings(nome_modelo=environment.MODELO_DE_EMBEDDINGS, tipo_modelo=SentenceTransformer, device=environment.DEVICE)
-        collection = client.create_collection(name='legisberto', embedding_function=funcao_de_embeddings_sentence_tranformer, metadata={'hnsw:space': 'cosine'})
+        funcao_de_embeddings_sentence_tranformer = FuncaoEmbeddings(nome_modelo=EMBEDDING_INSTRUCTOR, tipo_modelo=SentenceTransformer, device=DEVICE)
+        collection = client.create_collection(name=NOME_COLECAO, embedding_function=funcao_de_embeddings_sentence_tranformer, metadata={'hnsw:space': 'cosine'})
 
         qtd_docs = len(documentos)
         for idx in range(qtd_docs):
