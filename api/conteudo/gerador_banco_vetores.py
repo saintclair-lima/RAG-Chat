@@ -85,7 +85,7 @@ class GeradorBancoVetores:
 
         qtd_docs = len(documentos)
         for idx in range(qtd_docs):
-            print(f'Incluindo documento {idx+1} de {qtd_docs}')
+            print(f'\rIncluindo documento {idx+1} de {qtd_docs}', end='')
             doc = documentos[idx]
             collection.add(
                 documents=[doc['page_content']],
