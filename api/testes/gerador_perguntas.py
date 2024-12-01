@@ -2,6 +2,7 @@ import os
 import chromadb
 import requests
 import json
+import sys
 
 from sentence_transformers import SentenceTransformer
 
@@ -88,4 +89,6 @@ class GeradorPerguntas:
 if __name__ == "__main__":
     print('Iniciando gerador de perguntas')
     gerador_banco_perguntas = GeradorPerguntas()
-    gerador_banco_perguntas.run()
+    url_saida = sys.argv[0]
+    if url_saida: gerador_banco_perguntas.run(url_arquivo_saida=url_saida)
+    else: gerador_banco_perguntas.run()
