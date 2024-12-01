@@ -70,6 +70,8 @@ class GeradorPerguntas:
             print(f'Salvando resultados em {url_arquivo_saida}')
             with open(url_arquivo_saida, 'w', encoding='utf-8') as arq:
                 arq.write(json.dumps(documentos, indent=4, ensure_ascii=False))
+                
+            client._system.stop()
 
         qtd_docs = len(documentos)
         
