@@ -91,5 +91,5 @@ if __name__ == "__main__":
     print('Iniciando gerador de perguntas')
     gerador_banco_perguntas = GeradorPerguntas()
     url_saida = sys.argv[1]
-    if url_saida: gerador_banco_perguntas.run(url_arquivo_saida=url_saida)
+    if url_saida: gerador_banco_perguntas.run(url_arquivo_saida=url_saida, carregar_arquivo=True)
     else: gerador_banco_perguntas.run()
