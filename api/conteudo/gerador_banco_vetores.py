@@ -10,7 +10,7 @@ COMPRIMENTO_MAX_FRAGMENTO = 300
 EMBEDDING_INSTRUCTOR="hkunlp/instructor-xl"
 URL_BANCO_VETORES=os.path.join(URL_LOCAL,"bancos_vetores/bancos_vetores_regimento_resolucoes_rh_300")
 NOME_COLECAO='regimento_resolucoes_rh'
-DEVICE='cpu'
+DEVICE='cuda'
 
 class GeradorBancoVetores:
     def run(self):
