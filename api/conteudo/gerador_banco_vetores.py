@@ -78,8 +78,7 @@ class GeradorBancoVetores:
                 id += 1
 
         # Utilizando o ChromaDb diretamente
-        persist_directory = URL_BANCO_VETORES
-        client = chromadb.PersistentClient(path=persist_directory)
+        client = chromadb.PersistentClient(path=URL_BANCO_VETORES)
         funcao_de_embeddings_sentence_tranformer = FuncaoEmbeddings(nome_modelo=EMBEDDING_INSTRUCTOR, tipo_modelo=SentenceTransformer, device=DEVICE)
         collection = client.create_collection(name=NOME_COLECAO, embedding_function=funcao_de_embeddings_sentence_tranformer, metadata={'hnsw:space': 'cosine'})
 
