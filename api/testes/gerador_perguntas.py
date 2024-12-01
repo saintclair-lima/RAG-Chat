@@ -89,6 +89,6 @@ class GeradorPerguntas:
 if __name__ == "__main__":
     print('Iniciando gerador de perguntas')
     gerador_banco_perguntas = GeradorPerguntas()
-    url_saida = sys.argv[3]
+    url_saida = sys.argv[2]
     if url_saida: gerador_banco_perguntas.run(url_arquivo_saida=url_saida)
     else: gerador_banco_perguntas.run()
