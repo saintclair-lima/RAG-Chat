@@ -23,9 +23,10 @@ URL_BANCO_VETORES=os.path.join(URL_LOCAL,"../conteudo/bancos_vetores/banco_vetor
 NOME_COLECAO='regimento_resolucoes_rh'
 DEVICE='cuda' if cuda.is_available() else 'cpu'
 
-async def avaliar_respostas_llama(url_arq_perg_docs):
+async def avaliar_respostas_llama(url_arq_entrada, url_arq_saida=None):
+    if not url_arq_saida: url_arq_saida = url_arq_entrada
     if FAZER_LOG: print('Carregando JSON')
-    with open(url_arq_perg_docs, 'r', encoding='utf-8') as arq:
+    with open(url_arq_entrada, 'r', encoding='utf-8') as arq:
         dados = json.load(arq)
     if FAZER_LOG: print('Criando interface Ollama')
     interface_ollama = InterfaceOllama(url_llama=URL_LLAMA, nome_modelo=MODELO_LLAMA)
@@ -67,12 +68,12 @@ async def avaliar_respostas_llama(url_arq_perg_docs):
         item['llama'] = resp_llama
 
         if FAZER_LOG: print('salvando json')
-        with open(os.path.join(URL_LOCAL, 'testes_llama.json'), 'w', encoding='utf-8') as arq:
+        with open(os.path.join(url_arq_saida), 'w', encoding='utf-8') as arq:
             arq.write(json.dumps(dados, ensure_ascii=False, indent=4))
 
 if __name__ == '__main__':
     url_json_entrada = sys.argv[1]
-    asyncio.run(avaliar_respostas_llama(url_json_entrada))
+    asyncio.run(avaliar_respostas_llama(url_arq_entrada=url_json_entrada))
 else:
     url_json_entrada = sys.argv[1]
-    avaliar_respostas_llama(url_json_entrada)
+    avaliar_respostas_llama(url_arq_entrada=url_json_entrada)
