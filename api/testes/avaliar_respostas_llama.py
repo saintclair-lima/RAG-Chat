@@ -4,26 +4,38 @@ import json
 from time import time
 from sentence_transformers import SentenceTransformer
 from chromadb import chromadb
-import api.environment.environment as environment
-from utils.utils import FuncaoEmbeddings, InterfaceOllama
+from ..environment.environment import environment
+from ..utils.utils import FuncaoEmbeddings, InterfaceOllama
 import asyncio
+import os
+from torch import cuda
+import sys
 
 FAZER_LOG = False
+
+
+
+URL_LOCAL = os.path.abspath(os.path.join(os.path.dirname(__file__), "./"))
+URL_LLAMA = 'http://localhost:11434'
+MODELO_LLAMA='tinyllama'
+EMBEDDING_INSTRUCTOR="hkunlp/instructor-xl"
+URL_BANCO_VETORES=os.path.join(URL_LOCAL,"../conteudo/bancos_vetores/banco_vetores_regimento_resolucoes_rh")
+NOME_COLECAO='regimento_resolucoes_rh'
+DEVICE='cuda' if cuda.is_available() else 'cpu'
 
 async def avaliar_respostas_llama(url_arq_perg_docs):
     if FAZER_LOG: print('Carregando JSON')
     with open(url_arq_perg_docs, 'r', encoding='utf-8') as arq:
         dados = json.load(arq)
     if FAZER_LOG: print('Criando interface Ollama')
-    interface_ollama = InterfaceOllama(url_llama=environment.URL_LLAMA, nome_modelo=environment.MODELO_LLAMA)
-    persist_directory = environment.URL_BANCO_VETORES
+    interface_ollama = InterfaceOllama(url_llama=URL_LLAMA, nome_modelo=MODELO_LLAMA)
 
     if FAZER_LOG: print('Criando cliente Chroma')
-    client = chromadb.PersistentClient(path=persist_directory)
+    client = chromadb.PersistentClient(path=URL_BANCO_VETORES)
     if FAZER_LOG: print('Criando função de embeddings')
-    funcao_de_embeddings_sentence_tranformer = FuncaoEmbeddings(nome_modelo=environment.MODELO_DE_EMBEDDINGS, tipo_modelo=SentenceTransformer, device=environment.DEVICE)
+    funcao_de_embeddings_sentence_tranformer = FuncaoEmbeddings(nome_modelo=EMBEDDING_INSTRUCTOR, tipo_modelo=SentenceTransformer, device=DEVICE)
     if FAZER_LOG: print('Definindo Coleção')
-    collection = client.get_collection(name='legisberto', embedding_function=funcao_de_embeddings_sentence_tranformer)
+    collection = client.get_collection(name=NOME_COLECAO, embedding_function=funcao_de_embeddings_sentence_tranformer)
     
     if FAZER_LOG: print('Processando perguntas')
     num_itens = len(dados)
@@ -55,10 +67,12 @@ async def avaliar_respostas_llama(url_arq_perg_docs):
         item['llama'] = resp_llama
 
         if FAZER_LOG: print('salvando json')
-        with open('./testes/testes_llama_10_docs.json', 'w', encoding='utf-8') as arq:
+        with open(os.path.join(URL_LOCAL, 'testes_llama.json'), 'w', encoding='utf-8') as arq:
             arq.write(json.dumps(dados, ensure_ascii=False, indent=4))
 
 if __name__ == '__main__':
-    asyncio.run(avaliar_respostas_llama('./testes/testes_llama_10_docs.json'))
+    url_json_entrada = sys.argv[1]
+    asyncio.run(avaliar_respostas_llama(url_json_entrada))
 else:
-    avaliar_respostas_llama('./testes/testes_llama_10_docs.json')
+    url_json_entrada = sys.argv[1]
+    avaliar_respostas_llama(url_json_entrada)
