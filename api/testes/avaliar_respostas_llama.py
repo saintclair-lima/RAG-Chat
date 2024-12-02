@@ -17,7 +17,7 @@ FAZER_LOG = False
 
 URL_LOCAL = os.path.abspath(os.path.join(os.path.dirname(__file__), "./"))
 URL_LLAMA = 'http://localhost:11434'
-MODELO_LLAMA='tinyllama'
+MODELO_LLAMA='llama3.1'
 EMBEDDING_INSTRUCTOR="hkunlp/instructor-xl"
 URL_BANCO_VETORES=os.path.join(URL_LOCAL,"../conteudo/bancos_vetores/banco_vetores_regimento_resolucoes_rh")
 NOME_COLECAO='regimento_resolucoes_rh'
