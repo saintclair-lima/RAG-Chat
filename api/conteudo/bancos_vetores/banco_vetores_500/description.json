@@ -1,0 +1,32 @@
+{
+    "nome": "banco_vetores_alrn",
+    "colecoes": [
+        {
+            "nome": "legisberto2",
+            "instrução": null,
+            "quantidade_max_palavras_por_documento": 500,
+            "funcao_embeddings": {
+                "nome_modelo": "hkunlp/instructor-xl",
+                "tipo_modelo": "SentenceTransformer"
+            }
+        },
+        {
+            "nome": "legisberto3",
+            "instrução": null,
+            "quantidade_max_palavras_por_documento": 500,
+            "funcao_embeddings": {
+                "nome_modelo": "hkunlp/instructor-xl",
+                "tipo_modelo": "SentenceTransformer"
+            }
+        },
+        {
+            "nome": "legisberto4",
+            "instrução": null,
+            "quantidade_max_palavras_por_documento": 300,
+            "funcao_embeddings": {
+                "nome_modelo": "hkunlp/instructor-xl",
+                "tipo_modelo": "SentenceTransformer"
+            }
+        }
+    ]
+}
