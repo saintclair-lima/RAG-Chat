@@ -101,6 +101,7 @@ class GeradorBancoVetores:
         # client.get_collection(name='legisberto', embedding_function=funcao_de_embeddings_sentence_tranformer)
 
 if __name__ == "__main__":
+    print('argv >>> ', sys.argv)
     URL_BANCO_VETORES=os.path.join(URL_LOCAL,"bancos_vetores/" + sys.argv[1])
     NOME_COLECAO=sys.argv[2]
     COMPRIMENTO_MAX_FRAGMENTO = int(sys.argv[3])
