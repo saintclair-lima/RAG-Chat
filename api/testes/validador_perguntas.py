@@ -71,7 +71,7 @@ if __name__ == "__main__":
     gerador_banco_perguntas = ValidadorPerguntas()
     try:
         url_saida = sys.argv[1]
-        if url_saida: gerador_banco_perguntas.run(url_arquivo=url_saida, carregar_arquivo=True)
+        if url_saida: gerador_banco_perguntas.run(url_arquivo=url_saida)
         else: gerador_banco_perguntas.run()
     except:
         gerador_banco_perguntas.run()
