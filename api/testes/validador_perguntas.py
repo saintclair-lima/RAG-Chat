@@ -31,7 +31,7 @@ class ValidadorPerguntas:
         self.DEVICE = device
 
     def validar_pergunta(self, artigo, pergunta, contexto):
-        prompt = f'''Considere este texto: {artigo}. Considere esta pergunta: {pergunta}. Analise a pergunta de forma criteriosa. Avalie se a érgunta é coerente. Avalie se a pergunta pode ser respondida com base no texto. A saída deve ser um objeto JSON, com os atributos {{"coerente": true, "texto_responde": true}}. Não adicione nada na resposta, exceto o objeto JSON, sem qualquer comentário adicional antes ou depois'''
+        prompt = f'''Considere este texto: {artigo}. Considere esta pergunta: {pergunta}. Analise a pergunta de forma criteriosa e crítica. Avalie se a pergunta é coerente e clara. Avalie se a pergunta pode ser respondida com base no texto. A saída deve ser um objeto JSON, com os atributos {{"coerente": true, "texto_responde": true}}. O atributo "coerente" deve ser true se a pergunta for clara e coerente. O atributo "texto_responde" deve ser true se a pergunta puder ser respondida com base no texto. Não adicione nada na resposta, exceto o objeto JSON, sem qualquer comentário adicional antes ou depois'''
         payload = {
             "model": MODELO_LLAMA,
             "prompt": prompt,
