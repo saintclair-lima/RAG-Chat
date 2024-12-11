@@ -54,14 +54,14 @@ class ValidadorPerguntas:
 
         qtd_docs = len(documentos)
         
-        print(f'Gerando perguntas para {qtd_docs} documentos')
+        print(f'Validando perguntas para {qtd_docs} documentos')
         for idx in range(qtd_docs):
             print(f'\rProcessando documento {idx+1} de {qtd_docs}', end='')
             doc = documentos[idx]
             for pergunta in doc['perguntas']:
                 if 'validacao' not in pergunta:
                     validacao = self.validar_pergunta(artigo=doc['page_content'], pergunta=pergunta, contexto=[])
-                    doc['validacao'] = validacao
+                    pergunta['validacao'] = validacao
                     
                     with open(url_arquivo, 'w', encoding='utf-8') as arq:
                         arq.write(json.dumps(documentos, indent=4, ensure_ascii=False))
