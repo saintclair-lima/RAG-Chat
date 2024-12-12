@@ -76,8 +76,8 @@ async def avaliar_recuperacao_documentos():
             })
 
 
-    with open('testes_avaliar_documentos.json', 'w', encoding='utf-8') as arq:
-        arq.write(json.dumps(perguntas, indent=4, ensure_ascii=False))
+        with open('testes_avaliar_documentos.json', 'w', encoding='utf-8') as arq:
+            arq.write(json.dumps(perguntas, indent=4, ensure_ascii=False))
 
 
 
