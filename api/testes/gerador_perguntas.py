@@ -93,7 +93,6 @@ if __name__ == "__main__":
     gerador_banco_perguntas = GeradorPerguntas()
     try:
         url_saida = sys.argv[1]
-        if url_saida: gerador_banco_perguntas.run(url_arquivo_saida=url_saida, carregar_arquivo=True)
-        else: gerador_banco_perguntas.run()
+        gerador_banco_perguntas.run(url_arquivo_saida=url_saida, carregar_arquivo=True)
     except:
         gerador_banco_perguntas.run()
