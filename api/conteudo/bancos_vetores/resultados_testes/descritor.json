@@ -1,0 +1,32 @@
+{
+    "nome": "resultados_testes",
+    "colecoes": [
+        {
+            "nome": "sem_instrucao",
+            "instrução": null,
+            "quantidade_max_palavras_por_documento": 300,
+            "funcao_embeddings": {
+                "nome_modelo": "hkunlp/instructor-xl",
+                "tipo_modelo": "SentenceTransformer"
+            }
+        },
+        {
+            "nome": "instrucao_ingles",
+            "instrução": "Represent the legislative document for retrieval:",
+            "quantidade_max_palavras_por_documento": 300,
+            "funcao_embeddings": {
+                "nome_modelo": "hkunlp/instructor-xl",
+                "tipo_modelo": "SentenceTransformer"
+            }
+        },
+        {
+            "nome": "instrucao_portugues",
+            "instrução": "Represente o documento legislativo para document retrieval:",
+            "quantidade_max_palavras_por_documento": 300,
+            "funcao_embeddings": {
+                "nome_modelo": "hkunlp/instructor-xl",
+                "tipo_modelo": "SentenceTransformer"
+            }
+        }
+    ]
+}
