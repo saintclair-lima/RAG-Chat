@@ -8,14 +8,20 @@ from sentence_transformers import SentenceTransformer
 from chromadb import chromadb
 
 URL_LOCAL = os.path.abspath(os.path.join(os.path.dirname(__file__), "./"))
-COMPRIMENTO_MAX_FRAGMENTO = 300
 EMBEDDING_INSTRUCTOR="hkunlp/instructor-xl"
-URL_BANCO_VETORES=os.path.join(URL_LOCAL,"bancos_vetores/banco_vetores_regimento_resolucoes_rh_300")
-NOME_COLECAO='regimento_resolucoes_rh'
 DEVICE='cuda' if cuda.is_available() else 'cpu'
 
+# Valores padrão, geralmente não usados
+NOME_BANCO_VETORES=os.path.join(URL_LOCAL,"bancos_vetores/banco_vetores_regimento_resolucoes_rh_300")
+NOME_COLECAO='regimento_resolucoes_rh'
+COMPRIMENTO_MAX_FRAGMENTO = 300    
+
 class GeradorBancoVetores:
-    def run(self):
+    def run(self,
+            nome_banco_vetores=NOME_BANCO_VETORES,
+            nome_colecao=NOME_COLECAO,
+            comprimento_max_fragmento=COMPRIMENTO_MAX_FRAGMENTO,
+            instrucao=None):
         documentos = []
         titulos = []
         id=1
@@ -40,7 +46,7 @@ class GeradorBancoVetores:
             for art in texto:
                 item = art.split(' ')
                 qtd_palavras = len(item)
-                if qtd_palavras > COMPRIMENTO_MAX_FRAGMENTO:
+                if qtd_palavras > comprimento_max_fragmento:
                     item = (
                         art.replace('. §', '.\n§')
                         .replace('; §', ';\n§')
@@ -54,7 +60,7 @@ class GeradorBancoVetores:
                     caput = item[0]
                     fragmento_artigo = '' + caput
                     for i in range(1, len(item)):
-                        if len(fragmento_artigo.split(' ')) + len(item[i]) <= COMPRIMENTO_MAX_FRAGMENTO:
+                        if len(fragmento_artigo.split(' ')) + len(item[i]) <= comprimento_max_fragmento:
                             fragmento_artigo = fragmento_artigo + ' ' + item[i]
                         else:
                             artigos.append(fragmento_artigo)
@@ -80,13 +86,17 @@ class GeradorBancoVetores:
                 id += 1
 
         # Utilizando o ChromaDb diretamente
-        client = chromadb.PersistentClient(path=URL_BANCO_VETORES)
-        funcao_de_embeddings_sentence_tranformer = FuncaoEmbeddings(nome_modelo=EMBEDDING_INSTRUCTOR, tipo_modelo=SentenceTransformer, device=DEVICE)
-        collection = client.create_collection(name=NOME_COLECAO, embedding_function=funcao_de_embeddings_sentence_tranformer, metadata={'hnsw:space': 'cosine'})
-
+        client = chromadb.PersistentClient(path=nome_banco_vetores)
+        funcao_de_embeddings_sentence_tranformer = FuncaoEmbeddings(
+            nome_modelo=EMBEDDING_INSTRUCTOR,
+            tipo_modelo=SentenceTransformer,
+            device=DEVICE,
+            instrucao=instrucao)
+        collection = client.create_collection(name=nome_colecao, embedding_function=funcao_de_embeddings_sentence_tranformer, metadata={'hnsw:space': 'cosine'})
+        print(f'Gerando >>> Banco {nome_banco_vetores} - Coleção {nome_colecao} - Instrução: {instrucao}')
         qtd_docs = len(documentos)
         for idx in range(qtd_docs):
-            print(f'\rIncluindo documento {idx+1} de {qtd_docs}', end='')
+            print(f'\r>>> Incluindo documento {idx+1} de {qtd_docs}', end='')
             doc = documentos[idx]
             collection.add(
                 documents=[doc['page_content']],
@@ -100,12 +110,16 @@ class GeradorBancoVetores:
 
         # client.get_collection(name='legisberto', embedding_function=funcao_de_embeddings_sentence_tranformer)
 
-if __name__ == "__main__":
-    print('argv >>> ', sys.argv)
-    URL_BANCO_VETORES=os.path.join(URL_LOCAL,"bancos_vetores/" + sys.argv[1])
-    NOME_COLECAO=sys.argv[2]
-    COMPRIMENTO_MAX_FRAGMENTO = int(sys.argv[3])
+if __name__ == "__main__":   
     gerador_banco_vetores = GeradorBancoVetores()
-    gerador_banco_vetores.run()
+    
+    nome_banco_vetores=os.path.join(URL_LOCAL,"bancos_vetores/" + sys.argv[1])
+    nome_colecao=sys.argv[2]
+    comprimento_max_fragmento = int(sys.argv[3])
+    try:
+        instrucao = sys.argv[4]
+        gerador_banco_vetores.run()
+    except:
+        gerador_banco_vetores.run()
     
     
