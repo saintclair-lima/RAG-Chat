@@ -6,7 +6,6 @@ from sentence_transformers import SentenceTransformer
 from ..environment.environment import environment
 from ..gerador_de_respostas import GeradorDeRespostas
 from ..utils.utils import FuncaoEmbeddings
-#from documentos_perguntas import documentos_perguntas as docs
 from time import time
 import asyncio
 import os
