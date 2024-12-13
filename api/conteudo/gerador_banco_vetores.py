@@ -12,8 +12,8 @@ EMBEDDING_INSTRUCTOR="hkunlp/instructor-xl"
 DEVICE='cuda' if cuda.is_available() else 'cpu'
 
 # Valores padrão, geralmente não usados
-NOME_BANCO_VETORES=os.path.join(URL_LOCAL,"bancos_vetores/banco_vetores_regimento_resolucoes_rh_300")
-NOME_COLECAO='regimento_resolucoes_rh'
+NOME_BANCO_VETORES=os.path.join(URL_LOCAL,"bancos_vetores/banco_teste_default")
+NOME_COLECAO='colecao_teste_default'
 COMPRIMENTO_MAX_FRAGMENTO = 300    
 
 class GeradorBancoVetores:
@@ -118,8 +118,16 @@ if __name__ == "__main__":
     comprimento_max_fragmento = int(sys.argv[3])
     try:
         instrucao = sys.argv[4]
-        gerador_banco_vetores.run()
+        gerador_banco_vetores.run(
+            nome_banco_vetores=nome_banco_vetores,
+            nome_colecao=nome_colecao,
+            comprimento_max_fragmento=comprimento_max_fragmento,
+            instrucao=instrucao)
     except:
-        gerador_banco_vetores.run()
+        gerador_banco_vetores.run(
+            nome_banco_vetores=nome_banco_vetores,
+            nome_colecao=nome_colecao,
+            comprimento_max_fragmento=comprimento_max_fragmento,
+            instrucao=None)
     
     
