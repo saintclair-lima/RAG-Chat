@@ -13,11 +13,12 @@ def aplicar_score(url_arquivo_entrada, url_arquivo_saida=None):
 
     candidates = []
     references = []
-    ids = []
+    indices = []
 
-    for item in dados:
+    for idx in range(len(dados)):
+        item = dados[idx]
         if 'llama' in item:
-            ids.append(item['id'])
+            indices.append(idx)
             candidates.append(item['resposta'])
             references.append(item['llama']['response'])
 
@@ -26,6 +27,7 @@ def aplicar_score(url_arquivo_entrada, url_arquivo_saida=None):
 
     resultado = [
         {
+            'indice': indices[i],
             'precision': P[i].item(),
             'recall': R[i].item(),
             'f1': F1[i].item()
