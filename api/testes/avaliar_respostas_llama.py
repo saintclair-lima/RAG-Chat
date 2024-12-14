@@ -76,8 +76,7 @@ async def avaliar_respostas_llama(url_arquivo_entrada, nome_banco_vetores, nome_
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Gera resultados de busca por documentos a partir de uma lista de perguntas")
-    
-    # Define named arguments
+
     parser.add_argument('--url_entrada', type=str, required=True, help="caminho para arquivo com as perguntas")
     parser.add_argument('--nome_banco_vetores', type=str, required=True, help="nome do banco de vetores a ser consultado")
     parser.add_argument('--nome_colecao', type=str, required=True, help="coleçaõ do banco a ser utilizada")

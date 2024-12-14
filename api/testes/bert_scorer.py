@@ -21,14 +21,8 @@ def aplicar_score(url_arquivo_entrada, url_arquivo_saida=None):
             candidates.append(item['resposta'])
             references.append(item['llama']['response'])
 
-    # Calculate BERTScore
-    print('Calculando...')
+    print('Calculando BertScore...')
     P, R, F1 = score(candidates, references, lang="pt-br", verbose=False)
-
-    # Output results
-    print(f"Precision: {P.mean().item():.4f}")
-    print(f"Recall: {R.mean().item():.4f}")
-    print(f"F1 Score: {F1.mean().item():.4f}")
 
     resultado = [
         {
@@ -43,7 +37,6 @@ def aplicar_score(url_arquivo_entrada, url_arquivo_saida=None):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Gera resultados de busca por documentos a partir de uma lista de perguntas")
     
-    # Define named arguments
     parser.add_argument('--url_entrada', type=str, required=True, help="caminho para arquivo com as perguntas")
     parser.add_argument('--url_saida', type=str, help="caminho para arquivo em que serão salvos os resultados")
     
