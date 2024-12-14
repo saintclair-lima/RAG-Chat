@@ -1,4 +1,5 @@
 **/__pycache__/
 chat-env
 api/.env
-api/testes/resultados/*.json
+api/testes/resultados/*
+!api/testes/resultados/_resultados.zip
