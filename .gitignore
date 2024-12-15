@@ -3,3 +3,4 @@ chat-env
 api/.env
 api/testes/resultados/*
 !api/testes/resultados/_resultados.zip
+!api/testes/resultados/testes_automatizados.json
