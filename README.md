@@ -1,4 +1,5 @@
 # RAG-Chat
+Versão mais enxuta de https://github.com/saintclairlima/RAG-Chat_Old.
 
 ## Ollama: Instalação e Configuração
 ### Instalando o Ollama
